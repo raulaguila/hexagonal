@@ -5,16 +5,6 @@ import (
 	"github.com/raulaguila/go-api/pkg/validator"
 )
 
-// Validatable interface for DTOs that can be validated
-type Validatable interface {
-	Validate() error
-}
-
-// ValidateInput validates any Validatable input
-func ValidateInput(v Validatable) error {
-	return v.Validate()
-}
-
 // ProfileInput represents input data for creating/updating a profile
 type ProfileInput struct {
 	Name        *string   `json:"name" validate:"omitempty,min=4,max=100"`
@@ -72,11 +62,6 @@ func (p *PasswordInput) Validate() error {
 	return nil
 }
 
-// IsValid returns whether password input is valid (legacy support)
-func (p *PasswordInput) IsValid() bool {
-	return p.Validate() == nil
-}
-
 // LoginInput represents input data for login
 type LoginInput struct {
 	Login      string `json:"login" validate:"required"`
@@ -91,19 +76,6 @@ func (l *LoginInput) Validate() error {
 	}
 	if l.Password == "" {
 		return apperror.InvalidInput("password", "password is required")
-	}
-	return nil
-}
-
-// IDInput represents a single ID input
-type IDInput struct {
-	ID uint `json:"id" validate:"required,min=1"`
-}
-
-// Validate validates the IDInput
-func (i *IDInput) Validate() error {
-	if i.ID == 0 {
-		return apperror.InvalidInput("id", "id is required")
 	}
 	return nil
 }

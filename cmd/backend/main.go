@@ -49,7 +49,7 @@ func main() {
 		Database: cfg.DBName,
 		Timezone: cfg.Timezone,
 	})
-	log.DatabaseConnected(cfg.DBHost, cfg.DBPort, cfg.DBName)
+	log.Info("Database connected", slog.String("host", cfg.DBHost), slog.String("database", cfg.DBName))
 
 	// Connect to MinIO
 	log.Info("Connecting to MinIO...")
@@ -60,7 +60,7 @@ func main() {
 		Password:   cfg.MinioPassword,
 		BucketName: cfg.MinioBucketName,
 	})
-	log.StorageConnected(cfg.MinioHost+":"+cfg.MinioPort, cfg.MinioBucketName)
+	log.Info("Storage connected", slog.String("host", cfg.MinioHost), slog.String("bucket", cfg.MinioBucketName))
 
 	// Initialize dependency container
 	log.Info("Initializing dependencies...")

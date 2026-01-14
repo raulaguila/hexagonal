@@ -10,8 +10,6 @@ import (
 	"github.com/raulaguila/go-api/config"
 	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres/repository"
 	"github.com/raulaguila/go-api/internal/app"
-	"github.com/raulaguila/go-api/internal/core/port/input"
-	"github.com/raulaguila/go-api/internal/core/port/output"
 	"github.com/raulaguila/go-api/internal/core/usecase/auth"
 	"github.com/raulaguila/go-api/internal/core/usecase/profile"
 	"github.com/raulaguila/go-api/internal/core/usecase/user"
@@ -26,18 +24,18 @@ type Container struct {
 	Log    *logger.Logger
 	DB     *gorm.DB
 
-	// Repositories (Output Ports)
+	// Repositories
 	repositories *app.Repositories
 
-	// Use Cases (Input Ports)
+	// Use Cases
 	useCases *useCases
 }
 
 // useCases holds all use case implementations
 type useCases struct {
-	Auth    input.AuthUseCase
-	Profile input.ProfileUseCase
-	User    input.UserUseCase
+	auth    *auth.Config
+	profile interface{}
+	user    interface{}
 }
 
 // NewContainer creates and initializes a new dependency container
@@ -66,16 +64,7 @@ func (c *Container) initRepositories() {
 
 // initUseCases initializes all use case implementations
 func (c *Container) initUseCases() {
-	c.useCases = &useCases{
-		Auth: auth.NewAuthUseCase(c.repositories.User, auth.Config{
-			AccessPrivateKey:  c.Config.AccessPrivateKey,
-			AccessExpiration:  c.Config.AccessExpiration,
-			RefreshPrivateKey: c.Config.RefreshPrivateKey,
-			RefreshExpiration: c.Config.RefreshExpiration,
-		}),
-		Profile: profile.NewProfileUseCase(c.repositories.Profile),
-		User:    user.NewUserUseCase(c.repositories.User),
-	}
+	c.useCases = &useCases{}
 }
 
 // Application returns a fully configured Application instance
@@ -83,39 +72,14 @@ func (c *Container) Application() *app.Application {
 	return app.New(
 		c.Config,
 		c.Log,
-		c.useCases.Auth,
-		c.useCases.Profile,
-		c.useCases.User,
+		auth.NewAuthUseCase(c.repositories.User, auth.Config{
+			AccessPrivateKey:  c.Config.AccessPrivateKey,
+			AccessExpiration:  c.Config.AccessExpiration,
+			RefreshPrivateKey: c.Config.RefreshPrivateKey,
+			RefreshExpiration: c.Config.RefreshExpiration,
+		}),
+		profile.NewProfileUseCase(c.repositories.Profile),
+		user.NewUserUseCase(c.repositories.User),
 		c.repositories,
 	)
-}
-
-// Repositories returns the repositories
-func (c *Container) Repositories() *app.Repositories {
-	return c.repositories
-}
-
-// UserRepository returns the user repository
-func (c *Container) UserRepository() output.UserRepository {
-	return c.repositories.User
-}
-
-// ProfileRepository returns the profile repository
-func (c *Container) ProfileRepository() output.ProfileRepository {
-	return c.repositories.Profile
-}
-
-// AuthUseCase returns the auth use case
-func (c *Container) AuthUseCase() input.AuthUseCase {
-	return c.useCases.Auth
-}
-
-// ProfileUseCase returns the profile use case
-func (c *Container) ProfileUseCase() input.ProfileUseCase {
-	return c.useCases.Profile
-}
-
-// UserUseCase returns the user use case
-func (c *Container) UserUseCase() input.UserUseCase {
-	return c.useCases.User
 }
