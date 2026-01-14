@@ -1,0 +1,70 @@
+name: api
+
+volumes:
+
+  postgres_volume:
+    name: postgres_volume_api
+  minio_volume:
+    name: minio_volume_api
+
+networks:
+
+  network_api:
+    name: network_api
+    driver: bridge
+
+services:
+
+  postgres:
+
+    hostname: postgres
+    container_name: api_postgres
+    image: postgres:17.2-alpine
+    restart: always
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data
+      - ../SQL/:/docker-entrypoint-initdb.d
+    command: -p ${POSTGRES_PORT}
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    environment:
+      - TZ=${TZ}
+      - POSTGRES_DB=${POSTGRES_BASE}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASS}
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_BASE} -p ${POSTGRES_PORT}'" ]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 1s
+      start_interval: 2s
+    networks:
+      - network_api
+  
+  minio:
+
+    hostname: minio
+    container_name: api_minio
+    image: bitnamilegacy/minio:2024
+    restart: always
+    volumes:
+      - minio_volume:/bitnami/minio/data
+    ports:
+      - ${MINIO_API_PORT}:${MINIO_API_PORT}
+      - ${MINIO_WEB_PORT}:${MINIO_WEB_PORT}
+    environment:
+      - TZ=${TZ}
+      - MINIO_ROOT_USER=${MINIO_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_PASS}
+      - MINIO_API_PORT_NUMBER=${MINIO_API_PORT}
+      - MINIO_CONSOLE_PORT_NUMBER=${MINIO_WEB_PORT}
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 1s
+      start_interval: 2s
+    networks:
+      - network_api

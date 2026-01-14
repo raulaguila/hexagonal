@@ -1,0 +1,34 @@
+productNotFound: Product not found.
+productRegistered: Product already registered.
+productUsed: Product is being used.
+productCreated: Product created successfully.
+productUpdated: Product updated successfully.
+productDeleted: Product(s) deleted successfully.
+
+profileNotFound: Profile not found.
+profileRegistered: Profile already registered.
+profileUsed: Profile is being used.
+profileCreated: Profile created successfully.
+profileUpdated: Profile updated successfully.
+profileDeleted: Profile(s) deleted successfully.
+
+userNotFound: User not found.
+userRegistered: User already registered.
+userUsed: User is being used.
+userCreated: User created successfully.
+userUpdated: User updated successfully.
+userDeleted: User(s) deleted successfully.
+passSet: Password set successfully.
+passReset: Password reset successfully.
+
+itemNotFound: Item not found.
+passNotMatch: Passwords does not match.
+hasPass: User already has registered password.
+errGeneric: An unexpected error occurred, try again later.
+undefinedColumn: Undefined column or parameter name.
+disabledUser: Disabled user.
+invalidData: Invalid data, please specify valid data.
+invalidID: Invalid id, please specify valid id.
+incorrectCredentials: Incorrect credentials.
+nonExistentRoute: Route does not exist in this API.
+manyRequests: You have completed many requests in a short period of time! Please wait a minute!

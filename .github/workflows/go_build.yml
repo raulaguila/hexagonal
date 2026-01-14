@@ -1,0 +1,52 @@
+name: Go API Backend Build
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fetch Repository
+        uses: actions/checkout@v4
+
+      - name: Get build version
+        id: getVersion
+        run: echo "version=$(cat configs/version.txt)" >> $GITHUB_OUTPUT
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: true
+
+      - name: Environment file
+        run: make init
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build
+        run: make build
+
+      - name: Copy README.md
+        run: cp .github/README.md README.md 2>/dev/null || echo "No README.md to copy"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: go_api_${{ steps.getVersion.outputs.version }}
+          path: |
+            configs/.env
+            backend
+            README.md
+            Makefile
+            docs/
+            build/
+          if-no-files-found: error
+          overwrite: true
+          include-hidden-files: true

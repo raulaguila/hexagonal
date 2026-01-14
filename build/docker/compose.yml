@@ -1,0 +1,27 @@
+name: api
+
+include:
+  - services.compose.yml
+
+services:
+
+  backend:
+
+    image: api_backend:${SYS_VERSION}
+    container_name: api_backend
+    build:
+      context: ../..
+      dockerfile: build/docker/backend/${BASE}.Dockerfile
+    restart: always
+    ports:
+      - ${API_PORT}:${API_PORT}
+    tty: true
+    environment:
+      - TZ=${TZ}
+    networks:
+      - network_api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
