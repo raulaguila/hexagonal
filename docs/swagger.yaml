@@ -80,6 +80,7 @@ definitions:
   github_com_raulaguila_go-api_internal_core_dto.PasswordInput:
     properties:
       password:
+        maxLength: 128
         minLength: 6
         type: string
       password_confirm:
@@ -92,7 +93,7 @@ definitions:
     properties:
       name:
         maxLength: 100
-        minLength: 2
+        minLength: 4
         type: string
       permissions:
         items:
@@ -125,7 +126,7 @@ definitions:
         type: boolean
       username:
         maxLength: 50
-        minLength: 3
+        minLength: 5
         type: string
     type: object
   github_com_raulaguila_go-api_internal_core_dto.UserOutput:
@@ -912,6 +913,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/github_com_raulaguila_go-api_internal_adapter_driver_rest_presenter.Response'
+      security:
+      - Bearer: []
       summary: Set user password by ID
       tags:
       - User

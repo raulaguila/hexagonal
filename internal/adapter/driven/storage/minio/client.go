@@ -3,7 +3,6 @@ package minio
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -11,29 +10,24 @@ import (
 
 // Config holds MinIO configuration
 type Config struct {
-	Host       string
-	Port       string
+	Url        string
 	User       string
 	Password   string
 	BucketName string
 }
 
-// NewConfigFromEnv creates a Config from environment variables
-func NewConfigFromEnv() Config {
-	return Config{
-		Host:       os.Getenv("MINIO_HOST"),
-		Port:       os.Getenv("MINIO_API_PORT"),
-		User:       os.Getenv("MINIO_USER"),
-		Password:   os.Getenv("MINIO_PASS"),
-		BucketName: os.Getenv("MINIO_BUCKET_FILES"),
+// MustConnect establishes a connection or panics
+func MustConnect(cfg *Config) *minio.Client {
+	client, err := Connect(cfg)
+	if err != nil {
+		panic(err)
 	}
+	return client
 }
 
 // Connect establishes a connection to MinIO
-func Connect(cfg Config) (*minio.Client, error) {
-	endpoint := fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)
-
-	client, err := minio.New(endpoint, &minio.Options{
+func Connect(cfg *Config) (*minio.Client, error) {
+	client, err := minio.New(cfg.Url, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.User, cfg.Password, ""),
 		Secure: false,
 	})
@@ -47,15 +41,6 @@ func Connect(cfg Config) (*minio.Client, error) {
 	}
 
 	return client, nil
-}
-
-// MustConnect establishes a connection or panics
-func MustConnect(cfg Config) *minio.Client {
-	client, err := Connect(cfg)
-	if err != nil {
-		panic(err)
-	}
-	return client
 }
 
 // initBucket ensures the bucket exists and has versioning enabled

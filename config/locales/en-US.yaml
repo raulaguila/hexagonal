@@ -20,10 +20,10 @@ userUpdated: User updated successfully.
 userDeleted: User(s) deleted successfully.
 passSet: Password set successfully.
 passReset: Password reset successfully.
+userHasPassword: User already has registered password.
 
 itemNotFound: Item not found.
 passNotMatch: Passwords does not match.
-hasPass: User already has registered password.
 errGeneric: An unexpected error occurred, try again later.
 undefinedColumn: Undefined column or parameter name.
 disabledUser: Disabled user.

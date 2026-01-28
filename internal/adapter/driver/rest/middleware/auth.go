@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rsa"
 	"errors"
+	"log/slog"
 
 	"github.com/gofiber/contrib/fiberi18n/v2"
 	"github.com/gofiber/fiber/v2"
@@ -12,7 +13,7 @@ import (
 
 	"github.com/raulaguila/go-api/internal/adapter/driver/rest/presenter"
 	"github.com/raulaguila/go-api/internal/core/port/output"
-	"github.com/raulaguila/go-api/pkg/logger"
+	"github.com/raulaguila/go-api/pkg/loggerx"
 )
 
 const (
@@ -26,8 +27,8 @@ const (
 type AuthConfig struct {
 	PrivateKey    *rsa.PrivateKey
 	UserRepo      output.UserRepository
-	AllowSkipAuth bool           // Injected config instead of os.Getenv
-	Log           *logger.Logger // Injected logger instead of log.Println
+	AllowSkipAuth bool            // Injected config instead of os.Getenv
+	Log           *loggerx.Logger // Injected logger instead of log.Println
 }
 
 // Auth creates an authentication middleware
@@ -59,7 +60,7 @@ func Auth(cfg AuthConfig) fiber.Handler {
 			})
 			if err != nil {
 				if cfg.Log != nil {
-					cfg.Log.Debug("JWT parse error", "error", err.Error())
+					cfg.Log.Debug("JWT parse error", slog.String("error", err.Error()))
 				}
 				return false, errors.New(fiberi18n.MustLocalize(c, "errGeneric"))
 			}
@@ -78,7 +79,7 @@ func Auth(cfg AuthConfig) fiber.Handler {
 			user, err := cfg.UserRepo.FindByToken(c.Context(), token)
 			if err != nil {
 				if cfg.Log != nil {
-					cfg.Log.Debug("User lookup error", "error", err.Error())
+					cfg.Log.Debug("User lookup error", slog.String("error", err.Error()))
 				}
 				return false, errors.New(fiberi18n.MustLocalize(c, "errGeneric"))
 			}

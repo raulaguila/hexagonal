@@ -20,10 +20,10 @@ userUpdated: Usuário atualizado com sucesso.
 userDeleted: Usuário(s) deletado(s) com sucesso.
 passSet: Senha definida com sucesso.
 passReset: Senha redefinida com sucesso.
+userHasPassword: Usuário já possui senha cadastrada.
 
 itemNotFound: Item não encontrado.
 passNotMatch: Senhas não correspondem.
-hasPass: Usuário já possui senha cadastrada.
 errGeneric: Um erro inesperado ocorreu, tente novamente mais tarde.
 undefinedColumn: Coluna ou nome de parâmetro indefinido.
 disabledUser: Usuário desativado.

@@ -222,8 +222,8 @@ func GetCode(err error) Code {
 // Domain-specific error codes
 const (
 	// User errors
-	CodeUserNotFound    Code = "USER_NOT_FOUND"
-	CodeUserHasPassword Code = "USER_HAS_PASSWORD"
+	CodeUserNotFound    Code = "userNotFound"
+	CodeUserHasPassword Code = "userHasPassword"
 
 	// Profile errors
 	CodeProfileNotFound Code = "PROFILE_NOT_FOUND"
@@ -281,4 +281,3 @@ func InvalidCredentials() *Error {
 		Message: "invalid credentials",
 	}
 }
-

@@ -19,7 +19,7 @@ const (
 
 // DTOConfig holds configuration for DTO parsing middleware
 type DTOConfig struct {
-	ContextKey   string
+	ContextKey   any
 	OnLookup     Lookup
 	Model        any
 	ErrorHandler fiber.ErrorHandler
@@ -27,7 +27,7 @@ type DTOConfig struct {
 
 // DefaultDTOConfig provides default configuration
 var DefaultDTOConfig = DTOConfig{
-	ContextKey: "localDTO",
+	ContextKey: CtxKeyDTO,
 	OnLookup:   Body,
 	Model:      new(map[string]any),
 	ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -43,7 +43,7 @@ func ParseDTO(config ...DTOConfig) fiber.Handler {
 	cfg := DefaultDTOConfig
 	if len(config) > 0 {
 		cfg = config[0]
-		if cfg.ContextKey == "" {
+		if cfg.ContextKey == nil {
 			cfg.ContextKey = DefaultDTOConfig.ContextKey
 		}
 		if cfg.Model == nil {

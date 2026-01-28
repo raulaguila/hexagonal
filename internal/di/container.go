@@ -9,45 +9,37 @@ import (
 
 	"github.com/raulaguila/go-api/config"
 	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres/repository"
+	"github.com/raulaguila/go-api/internal/adapter/driven/storage/redis"
 	"github.com/raulaguila/go-api/internal/app"
 	"github.com/raulaguila/go-api/internal/core/usecase/auth"
 	"github.com/raulaguila/go-api/internal/core/usecase/profile"
 	"github.com/raulaguila/go-api/internal/core/usecase/user"
-	"github.com/raulaguila/go-api/pkg/logger"
+	"github.com/raulaguila/go-api/pkg/loggerx"
 )
 
 // Container holds all application dependencies.
 // It's the single source of truth for dependency injection.
 type Container struct {
 	// Infrastructure
-	Config *config.Config
-	Log    *logger.Logger
+	Config *config.Environment
+	Log    *loggerx.Logger
 	DB     *gorm.DB
+	Redis  *redis.Service
 
 	// Repositories
 	repositories *app.Repositories
-
-	// Use Cases
-	useCases *useCases
-}
-
-// useCases holds all use case implementations
-type useCases struct {
-	auth    *auth.Config
-	profile interface{}
-	user    interface{}
 }
 
 // NewContainer creates and initializes a new dependency container
-func NewContainer(cfg *config.Config, log *logger.Logger, db *gorm.DB) *Container {
+func NewContainer(cfg *config.Environment, log *loggerx.Logger, db *gorm.DB, redis *redis.Service) *Container {
 	c := &Container{
 		Config: cfg,
 		Log:    log,
 		DB:     db,
+		Redis:  redis,
 	}
 
 	c.initRepositories()
-	c.initUseCases()
 
 	log.Info("Dependency container initialized", slog.Int("repositories", 2), slog.Int("use_cases", 3))
 
@@ -56,15 +48,19 @@ func NewContainer(cfg *config.Config, log *logger.Logger, db *gorm.DB) *Containe
 
 // initRepositories initializes all repository implementations
 func (c *Container) initRepositories() {
-	c.repositories = &app.Repositories{
-		User:    repository.NewUserRepository(c.DB),
-		Profile: repository.NewProfileRepository(c.DB),
-	}
-}
+	profileRepo := repository.NewProfileRepository(c.DB)
+	userRepo := repository.NewUserRepository(c.DB)
 
-// initUseCases initializes all use case implementations
-func (c *Container) initUseCases() {
-	c.useCases = &useCases{}
+	// Apply caching decorator if Redis is available
+	if c.Redis != nil {
+		profileRepo = repository.NewCachedProfileRepository(profileRepo, c.Redis)
+		userRepo = repository.NewCachedUserRepository(userRepo, c.Redis)
+	}
+
+	c.repositories = &app.Repositories{
+		User:    userRepo,
+		Profile: profileRepo,
+	}
 }
 
 // Application returns a fully configured Application instance

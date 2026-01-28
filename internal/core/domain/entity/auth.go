@@ -21,14 +21,17 @@ type Auth struct {
 }
 
 // NewAuth creates a new Auth entity
-func NewAuth(profileID uint, status bool) *Auth {
+func NewAuth(profileID uint, status bool) (*Auth, error) {
+	if profileID == 0 {
+		return nil, ErrProfileRequired()
+	}
 	now := time.Now()
 	return &Auth{
 		Status:    status,
 		ProfileID: profileID,
 		CreatedAt: now,
 		UpdatedAt: now,
-	}
+	}, nil
 }
 
 // SetPassword hashes and sets the password

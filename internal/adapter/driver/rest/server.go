@@ -2,16 +2,17 @@ package rest
 
 import (
 	"crypto/rsa"
+	"fmt"
 	"html/template"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/gofiber/contrib/fiberi18n/v2"
+	"github.com/gofiber/contrib/otelfiber/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
-	fiberlogger "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/swagger"
 	"golang.org/x/text/language"
@@ -21,12 +22,12 @@ import (
 	"github.com/raulaguila/go-api/internal/adapter/driver/rest/middleware"
 	"github.com/raulaguila/go-api/internal/adapter/driver/rest/presenter"
 	"github.com/raulaguila/go-api/internal/app"
-	"github.com/raulaguila/go-api/pkg/logger"
+	"github.com/raulaguila/go-api/pkg/loggerx"
 )
 
 // Config holds server configuration
 type Config struct {
-	Port              string
+	Port              int
 	EnablePrefork     bool
 	EnableLogger      bool
 	EnableSwagger     bool
@@ -47,7 +48,7 @@ type Server struct {
 }
 
 // Logger is an alias for the logger package
-type Logger = logger.Logger
+type Logger = loggerx.Logger
 
 // NewServer creates a new REST API server
 func NewServer(
@@ -75,13 +76,14 @@ func (s *Server) Start() error {
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			return presenter.InternalServerError(c, err.Error())
 		},
-		BodyLimit: 4 * 1024 * 1024,
+		BodyLimit:      4 * 1024 * 1024,
+		ReadBufferSize: 1024 * 1024,
 	})
 
 	s.setupMiddlewares()
 	s.setupRoutes()
 
-	return s.app.Listen(":" + s.config.Port)
+	return s.app.Listen(fmt.Sprintf(":%d", s.config.Port))
 }
 
 // Shutdown gracefully shuts down the server
@@ -92,9 +94,11 @@ func (s *Server) Shutdown() error {
 // setupMiddlewares configures global middlewares
 func (s *Server) setupMiddlewares() {
 	s.app.Use(recover.New())
+	s.app.Use(otelfiber.Middleware())
 
+	// Use structured logger with TraceID support
 	if s.config.EnableLogger {
-		s.app.Use(s.loggerMiddleware())
+		s.app.Use(middleware.RequestLogger(s.log))
 	}
 
 	s.app.Use(
@@ -123,33 +127,6 @@ func (s *Server) setupMiddlewares() {
 			},
 		}),
 	)
-}
-
-// loggerMiddleware creates the logger middleware
-func (s *Server) loggerMiddleware() fiber.Handler {
-	return fiberlogger.New(fiberlogger.Config{
-		CustomTags: map[string]fiberlogger.LogFunc{
-			"xid": func(output fiberlogger.Buffer, _ *fiber.Ctx, data *fiberlogger.Data, _ string) (int, error) {
-				return output.WriteString(data.Pid)
-			},
-			"fullPath": func(output fiberlogger.Buffer, c *fiber.Ctx, _ *fiberlogger.Data, _ string) (int, error) {
-				return output.WriteString(c.OriginalURL())
-			},
-			"xip": func(output fiberlogger.Buffer, c *fiber.Ctx, _ *fiberlogger.Data, _ string) (int, error) {
-				return output.WriteString(c.IP())
-			},
-			"xauth": func(output fiberlogger.Buffer, c *fiber.Ctx, _ *fiberlogger.Data, _ string) (int, error) {
-				if key := c.Get("Authorization", ""); key != "" {
-					trimmed := strings.TrimPrefix(key, "Bearer ")
-					return output.WriteString(":" + trimmed[:min(len(trimmed), 10)])
-				}
-				return output.WriteString("")
-			},
-		},
-		Format:     "[FIBER:${magenta}${xid}${reset}] ${time} | ${status} | ${latency} | ${xip} | ${method} ${fullPath} ${yellow}\"${reqHeader:Accept-Language}${xauth}\"${reset} ${magenta}${error}${reset}\n",
-		TimeFormat: "2006-01-02 15:04:05",
-		TimeZone:   time.Local.String(),
-	})
 }
 
 // setupRoutes configures API routes
@@ -196,7 +173,7 @@ func (s *Server) setupRoutes() {
 }
 
 // Port returns the server port
-func (s *Server) Port() string {
+func (s *Server) Port() int {
 	return s.config.Port
 }
 

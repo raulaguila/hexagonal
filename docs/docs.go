@@ -918,6 +918,11 @@ const docTemplate = `{
         },
         "/user/pass": {
             "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Set user password by ID",
                 "consumes": [
                     "application/json"
@@ -1269,6 +1274,7 @@ const docTemplate = `{
             "properties": {
                 "password": {
                     "type": "string",
+                    "maxLength": 128,
                     "minLength": 6
                 },
                 "password_confirm": {
@@ -1282,7 +1288,7 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "maxLength": 100,
-                    "minLength": 2
+                    "minLength": 4
                 },
                 "permissions": {
                     "type": "array",
@@ -1330,7 +1336,7 @@ const docTemplate = `{
                 "username": {
                     "type": "string",
                     "maxLength": 50,
-                    "minLength": 3
+                    "minLength": 5
                 }
             }
         },

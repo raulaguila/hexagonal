@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 
 	_ "github.com/raulaguila/go-api/docs" // Swagger docs
@@ -11,10 +14,30 @@ import (
 	"github.com/raulaguila/go-api/config"
 	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres"
 	"github.com/raulaguila/go-api/internal/adapter/driven/storage/minio"
+	"github.com/raulaguila/go-api/internal/adapter/driven/storage/redis"
 	"github.com/raulaguila/go-api/internal/adapter/driver/rest"
 	"github.com/raulaguila/go-api/internal/di"
-	"github.com/raulaguila/go-api/pkg/logger"
+	"github.com/raulaguila/go-api/pkg/loggerx"
+	"github.com/raulaguila/go-api/pkg/loggerx/formatter"
+	"github.com/raulaguila/go-api/pkg/loggerx/sink"
+	"github.com/raulaguila/go-api/pkg/telemetry"
 )
+
+// initLogger creates and configures the application logger
+func initLogger(cfg *config.Environment) *loggerx.Logger {
+	return loggerx.New(
+		// loggerx.WithTimeFormat(time.DateTime),
+		loggerx.WithLevel(loggerx.ParseLogLevel(cfg.LogLevel)),
+		loggerx.WithSink(sink.NewStdout(
+			sink.WithFormatter(formatter.NewJSON()),
+		)),
+		loggerx.WithFields(map[string]any{
+			"app":     cfg.ServiceName,
+			"version": cfg.Version,
+		}),
+		loggerx.WithSink(sink.NewOTLP()),
+	)
+}
 
 // @title 						Go API
 // @version						1.0.0
@@ -34,37 +57,41 @@ func main() {
 	// Load configuration
 	cfg := config.MustLoad()
 
+	// Initialize OpenTelemetry
+	ctx := context.Background()
+	shutdown, err := telemetry.SetupOTelSDK(ctx, cfg.ServiceName, cfg.Version, cfg.OtelExporterOtlpEndpoint)
+	if err != nil {
+		fmt.Printf("Error setting up OpenTelemetry: %v\n", err)
+	}
+	defer func() {
+		if err := shutdown(ctx); err != nil {
+			fmt.Printf("Error shutting down OpenTelemetry: %v\n", err)
+		}
+	}()
+
 	// Initialize logger
 	log := initLogger(cfg)
 
-	log.Info("Configuration loaded", slog.String("port", cfg.Port), slog.String("environment", cfg.Environment))
+	log.Info("Configuration loaded", slog.Int("port", cfg.Port), slog.String("environment", cfg.Environment))
 
 	// Connect to PostgreSQL
 	log.Info("Connecting to PostgreSQL...")
-	db := postgres.MustConnect(postgres.Config{
-		Host:     cfg.DBHost,
-		Port:     cfg.DBPort,
-		User:     cfg.DBUser,
-		Password: cfg.DBPassword,
-		Database: cfg.DBName,
-		Timezone: cfg.Timezone,
-	})
-	log.Info("Database connected", slog.String("host", cfg.DBHost), slog.String("database", cfg.DBName))
+	db := postgres.MustConnect(&postgres.Config{Dsn: cfg.PGDSN})
+	log.Info("Database connected", slog.String("host", cfg.PGHost), slog.String("database", cfg.PGBase))
 
 	// Connect to MinIO
 	log.Info("Connecting to MinIO...")
-	_ = minio.MustConnect(minio.Config{
-		Host:       cfg.MinioHost,
-		Port:       cfg.MinioPort,
-		User:       cfg.MinioUser,
-		Password:   cfg.MinioPassword,
-		BucketName: cfg.MinioBucketName,
-	})
+	_ = minio.MustConnect(&minio.Config{Url: cfg.MinioUrl, User: cfg.MinioUser, Password: cfg.MinioPassword, BucketName: cfg.MinioBucketName})
 	log.Info("Storage connected", slog.String("host", cfg.MinioHost), slog.String("bucket", cfg.MinioBucketName))
+
+	// Connect to Redis
+	log.Info("Connecting to Redis...")
+	redisSvc := redis.MustNew(redis.Config{Host: cfg.RedisHost, Port: cfg.RedisPort, Password: cfg.RedisPass, DB: cfg.RedisDB})
+	log.Info("Redis connected", slog.String("host", cfg.RedisHost))
 
 	// Initialize dependency container
 	log.Info("Initializing dependencies...")
-	container := di.NewContainer(cfg, log, db)
+	container := di.NewContainer(cfg, log, db, redisSvc)
 
 	// Get application instance
 	application := container.Application()
@@ -87,8 +114,14 @@ func main() {
 	// Handle graceful shutdown
 	go handleShutdown(log, server, container)
 
+	log.Info("Application starting",
+		slog.Int("port", cfg.Port),
+		slog.String("go_version", runtime.Version()),
+		slog.Int("num_cpu", runtime.NumCPU()),
+		slog.Int("gomaxprocs", runtime.GOMAXPROCS(0)),
+	)
+
 	// Start server
-	log.Startup(cfg.Port, cfg.Version)
 	if err := server.Start(); err != nil {
 		log.Error("Server failed to start",
 			slog.String("error", err.Error()),
@@ -97,20 +130,8 @@ func main() {
 	}
 }
 
-// initLogger creates and configures the application logger
-func initLogger(cfg *config.Config) *logger.Logger {
-	return logger.Init(logger.Config{
-		Level:       parseLogLevel(cfg.LogLevel),
-		Format:      cfg.LogFormat,
-		ServiceName: "go-api",
-		Version:     cfg.Version,
-		Environment: cfg.Environment,
-		AddSource:   cfg.Environment != "production",
-	})
-}
-
 // handleShutdown handles graceful shutdown on SIGINT/SIGTERM
-func handleShutdown(log *logger.Logger, server *rest.Server, container *di.Container) {
+func handleShutdown(log *loggerx.Logger, server *rest.Server, container *di.Container) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-sigChan
@@ -128,18 +149,4 @@ func handleShutdown(log *logger.Logger, server *rest.Server, container *di.Conta
 	}
 
 	os.Exit(0)
-}
-
-// parseLogLevel converts string to logger.Level
-func parseLogLevel(level string) logger.Level {
-	switch level {
-	case "debug":
-		return logger.LevelDebug
-	case "warn":
-		return logger.LevelWarn
-	case "error":
-		return logger.LevelError
-	default:
-		return logger.LevelInfo
-	}
 }

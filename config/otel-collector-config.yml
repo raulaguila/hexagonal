@@ -1,0 +1,33 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+exporters:
+  otlp/elastic:
+    endpoint: "apm-server:8200"
+    headers:
+      Authorization: "Basic ZWxhc3RpYzpjaGFuZ2VtZQ=="
+    tls:
+      insecure: true
+
+processors:
+  batch:
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/elastic]
+    
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/elastic]
+      
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/elastic]

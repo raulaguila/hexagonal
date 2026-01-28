@@ -4,161 +4,113 @@ import (
 	"crypto/rsa"
 	"embed"
 	"encoding/base64"
+	"fmt"
 	"os"
 	"path"
 	"runtime"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
+	"github.com/raulaguila/go-api/pkg/envx"
 )
 
 //go:embed locales/*
 var Locales embed.FS
 
 // Config holds all application configuration
-type Config struct {
+type Environment struct {
 	// System
-	Timezone      string
-	Version       string
-	Port          string
-	Environment   string
-	LogLevel      string
-	LogFormat     string
-	EnablePrefork bool
-	EnableLogger  bool
-	EnableSwagger bool
+	Timezone    *time.Location `env:"TZ" default:"America/Manaus"`
+	ServiceName string         `env:"SYS_NAME" default:"API Backend"`
+	Version     string         `env:"SYS_VERSION" default:"1.0.0"`
+	Environment string         `env:"SYS_ENVIRONMENT" default:"production"`
+
+	LogFormat string `env:"LOG_FORMAT" default:"json"`
+	LogLevel  string `env:"LOG_LEVEL" default:"info"`
+
+	Port          int  `env:"API_PORT" default:"9999"`
+	EnableLogger  bool `env:"API_LOGGER" default:"1"`
+	EnableSwagger bool `env:"API_SWAGGO" default:"1"`
+	EnablePrefork bool `env:"API_ENABLE_PREFORK" default:"1"`
 
 	// JWT
-	AccessPrivateKey  *rsa.PrivateKey
-	AccessExpiration  time.Duration
-	RefreshPrivateKey *rsa.PrivateKey
-	RefreshExpiration time.Duration
+	AccessPrivateKey  *rsa.PrivateKey `env:"ACCESS_TOKEN" default:"new"`
+	AccessExpiration  time.Duration   `env:"ACCESS_TOKEN_EXPIRE" default:"15m"`
+	RefreshPrivateKey *rsa.PrivateKey `env:"RFRESH_TOKEN" default:"new"`
+	RefreshExpiration time.Duration   `env:"RFRESH_TOKEN_EXPIRE" default:"60m"`
 
 	// Database
-	DBHost     string
-	DBPort     string
-	DBUser     string
-	DBPassword string
-	DBName     string
+	PGHost     string `env:"POSTGRES_HOST" default:"postgres"`
+	PGPort     int    `env:"POSTGRES_PORT" default:"5438"`
+	PGUser     string `env:"POSTGRES_USER" default:"root"`
+	PGPassword string `env:"POSTGRES_PASS" default:"root"`
+	PGBase     string `env:"POSTGRES_BASE" default:"api"`
+	PGDSN      string `env:"POSTGRES_DSN" default:"host=${POSTGRES_HOST} user=${POSTGRES_USER} password=${POSTGRES_PASS} dbname=${POSTGRES_BASE} port=${POSTGRES_PORT} sslmode=disable TimeZone=${TZ}"`
 
 	// MinIO
-	MinioHost       string
-	MinioPort       string
-	MinioUser       string
-	MinioPassword   string
-	MinioBucketName string
+	MinioHost       string `env:"MINIO_HOST" default:"localhost"`
+	MinioPort       int    `env:"MINIO_API_PORT" default:"9004"`
+	MinioUrl        string `env:"MINIO_URL" default:"${MINIO_HOST}:${MINIO_API_PORT}"`
+	MinioUser       string `env:"MINIO_USER" default:"minio"`
+	MinioPassword   string `env:"MINIO_PASS" default:"miniopass"`
+	MinioBucketName string `env:"MINIO_BUCKET" default:"api"`
+
+	// OpenTelemetry
+	OtelExporterOtlpEndpoint string `env:"OTEL_EXPORTER_OTLP_ENDPOINT" default:"localhost:4317"`
+
+	// Redis
+	RedisHost string `env:"REDIS_HOST" default:"redis"`
+	RedisPort int    `env:"REDIS_PORT" default:"6379"`
+	RedisPass string `env:"REDIS_PASS" default:""`
+	RedisDB   int    `env:"REDIS_DB" default:"0"`
 }
 
-// Load loads configuration from environment
-func Load() (*Config, error) {
-	// Try to load .env file
-	if err := godotenv.Load(path.Join("config", ".env")); err != nil {
-		_, b, _, _ := runtime.Caller(0)
-		_ = godotenv.Load(path.Join(path.Dir(b), "..", "..", "config", ".env"))
-	}
+func init() {
+	// Register parser for *time.Location
+	envx.RegisterParser(func(s string) (*time.Location, error) {
+		return time.LoadLocation(s)
+	})
 
-	// Set timezone
-	tz := os.Getenv("TZ")
-	if tz == "" {
-		tz = "America/Manaus"
-	}
-	loc, err := time.LoadLocation(tz)
-	if err != nil {
-		return nil, err
-	}
-	time.Local = loc
-
-	// Parse JWT keys
-	accessPrivateKey, err := parseRSAPrivateKey(os.Getenv("ACCESS_TOKEN"))
-	if err != nil {
-		return nil, err
-	}
-
-	refreshPrivateKey, err := parseRSAPrivateKey(os.Getenv("RFRESH_TOKEN"))
-	if err != nil {
-		return nil, err
-	}
-
-	accessExpiration, _ := parseDuration(os.Getenv("ACCESS_TOKEN_EXPIRE"), 15)
-	refreshExpiration, _ := parseDuration(os.Getenv("RFRESH_TOKEN_EXPIRE"), 60)
-
-	return &Config{
-		// System
-		Timezone:      tz,
-		Version:       getEnv("SYS_VERSION", "1.0.0"),
-		Port:          getEnv("API_PORT", "9000"),
-		Environment:   getEnv("ENVIRONMENT", "development"),
-		LogLevel:      getEnv("LOG_LEVEL", "info"),
-		LogFormat:     getEnv("LOG_FORMAT", "json"),
-		EnablePrefork: os.Getenv("API_ENABLE_PREFORK") == "1",
-		EnableLogger:  os.Getenv("API_LOGGER") == "1",
-		EnableSwagger: os.Getenv("API_SWAGGO") == "1",
-
-		// JWT
-		AccessPrivateKey:  accessPrivateKey,
-		AccessExpiration:  accessExpiration,
-		RefreshPrivateKey: refreshPrivateKey,
-		RefreshExpiration: refreshExpiration,
-
-		// Database
-		DBHost:     getEnv("POSTGRES_HOST", "localhost"),
-		DBPort:     getEnv("POSTGRES_PORT", "5432"),
-		DBUser:     getEnv("POSTGRES_USER", "root"),
-		DBPassword: getEnv("POSTGRES_PASS", "root"),
-		DBName:     getEnv("POSTGRES_BASE", "api"),
-
-		// MinIO
-		MinioHost:       os.Getenv("MINIO_HOST"),
-		MinioPort:       getEnv("MINIO_API_PORT", "9004"),
-		MinioUser:       getEnv("MINIO_USER", "minio"),
-		MinioPassword:   getEnv("MINIO_PASS", "miniopass"),
-		MinioBucketName: getEnv("MINIO_BUCKET_FILES", "api"),
-	}, nil
+	// Register parser for *rsa.PrivateKey
+	envx.RegisterParser(func(s string) (*rsa.PrivateKey, error) {
+		decoded, err := base64.StdEncoding.DecodeString(s)
+		if err != nil {
+			return nil, err
+		}
+		t, err := jwt.ParseRSAPrivateKeyFromPEM(decoded)
+		if err != nil {
+			return nil, err
+		}
+		return t, nil
+	})
 }
 
-// MustLoad loads configuration or panics
-func MustLoad() *Config {
-	cfg, err := Load()
+// MustLoad loads environment or panics
+func MustLoad() *Environment {
+	cfg, err := load()
 	if err != nil {
 		panic(err)
 	}
 	return cfg
 }
 
-// parseRSAPrivateKey parses a base64-encoded RSA private key
-func parseRSAPrivateKey(encoded string) (*rsa.PrivateKey, error) {
-	decoded, err := base64.StdEncoding.DecodeString(encoded)
-	if err != nil {
-		return nil, err
-	}
-	return jwt.ParseRSAPrivateKeyFromPEM(decoded)
-}
-
-// parseDuration parses a duration string in minutes
-func parseDuration(str string, defaultMinutes int) (time.Duration, error) {
-	if str == "" {
-		return time.Duration(defaultMinutes) * time.Minute, nil
-	}
-	var minutes int
-	if _, err := os.Stat(str); err == nil {
-		return time.Duration(defaultMinutes) * time.Minute, nil
-	}
-	for _, c := range str {
-		if c >= '0' && c <= '9' {
-			minutes = minutes*10 + int(c-'0')
+// Load loads configuration from environment
+func load() (*Environment, error) {
+	if err := envx.LoadDotEnvOverride(path.Join("config", ".env")); err != nil {
+		_, b, _, _ := runtime.Caller(0)
+		if err := envx.LoadDotEnvOverride(path.Join(path.Dir(b), "..", "..", "config", ".env")); err != nil {
+			fmt.Printf("Failed to load environment file: %v\n", err)
+			os.Exit(1)
 		}
 	}
-	if minutes == 0 {
-		minutes = defaultMinutes
-	}
-	return time.Duration(minutes) * time.Minute, nil
-}
 
-// getEnv returns environment variable value or default
-func getEnv(key, defaultVal string) string {
-	if val := os.Getenv(key); val != "" {
-		return val
+	env := &Environment{}
+	if err := envx.Load(env); err != nil {
+		fmt.Printf("Failed to parse environments: %v\n", err)
+		os.Exit(1)
 	}
-	return defaultVal
+
+	time.Local = env.Timezone
+
+	return env, nil
 }

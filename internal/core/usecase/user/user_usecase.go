@@ -53,17 +53,23 @@ func (uc *userUseCase) GetUserByID(ctx context.Context, id uint) (*dto.UserOutpu
 
 // CreateUser creates a new user
 func (uc *userUseCase) CreateUser(ctx context.Context, input *dto.UserInput) (*dto.UserOutput, error) {
-	auth := entity.NewAuth(
+	auth, err := entity.NewAuth(
 		utils.Deref(input.ProfileID, uint(0)),
 		utils.Deref(input.Status, true),
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	user := entity.NewUser(
+	user, err := entity.NewUser(
 		utils.Deref(input.Name, ""),
 		utils.Deref(input.Username, ""),
 		utils.Deref(input.Email, ""),
 		auth,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := user.Validate(); err != nil {
 		return nil, err
@@ -74,7 +80,7 @@ func (uc *userUseCase) CreateUser(ctx context.Context, input *dto.UserInput) (*d
 	}
 
 	// Reload user with relations
-	user, err := uc.userRepo.FindByID(ctx, user.ID)
+	user, err = uc.userRepo.FindByID(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}

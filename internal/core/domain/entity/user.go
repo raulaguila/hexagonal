@@ -19,9 +19,9 @@ type User struct {
 }
 
 // NewUser creates a new User entity
-func NewUser(name, username, email string, auth *Auth) *User {
+func NewUser(name, username, email string, auth *Auth) (*User, error) {
 	now := time.Now()
-	return &User{
+	u := &User{
 		Name:      name,
 		Username:  username,
 		Email:     email,
@@ -29,6 +29,12 @@ func NewUser(name, username, email string, auth *Auth) *User {
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
+
+	if err := u.Validate(); err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
 
 // Validate validates the user entity
@@ -72,7 +78,10 @@ func (u *User) UpdateEmail(email string) {
 // SetPassword sets the user's password through Auth
 func (u *User) SetPassword(password string) error {
 	if u.Auth == nil {
-		u.Auth = NewAuth(0, true)
+		var err error
+		if u.Auth, err = NewAuth(0, true); err != nil {
+			return err
+		}
 	}
 	return u.Auth.SetPassword(password)
 }

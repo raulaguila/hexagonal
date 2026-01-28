@@ -6,17 +6,17 @@ import (
 	"github.com/raulaguila/go-api/config"
 	"github.com/raulaguila/go-api/internal/core/port/input"
 	"github.com/raulaguila/go-api/internal/core/port/output"
-	"github.com/raulaguila/go-api/pkg/logger"
+	"github.com/raulaguila/go-api/pkg/loggerx"
 )
 
 // Application is the main entry point for all business operations.
 // It holds all use cases and can be injected into any interface adapter.
 type Application struct {
 	// Configuration
-	Config *config.Config
+	Config *config.Environment
 
 	// Logging
-	Log *logger.Logger
+	Log *loggerx.Logger
 
 	// Use Cases (Input Ports)
 	Auth    input.AuthUseCase
@@ -36,14 +36,14 @@ type Repositories struct {
 // Options holds optional dependencies for the application
 type Options struct {
 	// ExternalLogHandler for sending logs to external systems
-	ExternalLogHandler interface{}
+	ExternalLogHandler any
 }
 
 // Option is a function that configures the Application
 type Option func(*Application)
 
 // WithLogger sets a custom logger
-func WithLogger(log *logger.Logger) Option {
+func WithLogger(log *loggerx.Logger) Option {
 	return func(a *Application) {
 		a.Log = log
 	}
@@ -51,8 +51,8 @@ func WithLogger(log *logger.Logger) Option {
 
 // New creates a new Application instance with all dependencies wired up
 func New(
-	cfg *config.Config,
-	log *logger.Logger,
+	cfg *config.Environment,
+	log *loggerx.Logger,
 	authUC input.AuthUseCase,
 	profileUC input.ProfileUseCase,
 	userUC input.UserUseCase,
