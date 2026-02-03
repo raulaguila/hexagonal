@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../utils/api';
+import api from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -48,9 +48,6 @@ export const AuthProvider = ({ children }) => {
 
         const userRes = await api.get('/auth');
         setUser(userRes.data);
-        return userRes.data;
-        setUser(userRes.data);
-
         return userRes.data;
     };
 

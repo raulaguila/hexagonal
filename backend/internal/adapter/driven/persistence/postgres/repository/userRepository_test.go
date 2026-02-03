@@ -5,15 +5,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres"
-	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres/model"
-	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres/repository"
-	"github.com/raulaguila/go-api/internal/core/domain/entity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+
+	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres"
+	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres/model"
+	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres/repository"
+	"github.com/raulaguila/go-api/internal/core/domain/entity"
 )
 
 // setupPostgresContainer starts a Postgres container for testing

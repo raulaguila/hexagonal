@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/raulaguila/go-api/pkg/loggerx/formatter"
 	"go.opentelemetry.io/otel/log"
 	"go.opentelemetry.io/otel/log/global"
+
+	"github.com/raulaguila/go-api/pkg/loggerx/formatter"
 )
 
 // OTLPSink sends log entries to the OpenTelemetry Logger Provider.

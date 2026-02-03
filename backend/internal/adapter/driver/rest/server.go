@@ -196,8 +196,11 @@ func (s *Server) setupRoutes() {
 		Log:           s.appCtx.Log,
 	})
 
+	// API V1 Group
+	v1 := s.app.Group("/v1")
+
 	// Register handlers
-	handler.NewHealthHandler(s.app.Group(""), s.appCtx)
+	handler.NewHealthHandler(v1.Group(""), s.appCtx)
 
 	authLimiter := limiter.New(limiter.Config{
 		Max:        5, // Auth routes: 5 req/min
@@ -211,9 +214,9 @@ func (s *Server) setupRoutes() {
 		},
 	})
 
-	handler.NewAuthHandler(s.app.Group("/auth", authLimiter), s.appCtx.Auth, accessAuth, refreshAuth)
-	handler.NewRoleHandler(s.app.Group("/role"), s.appCtx.Role, accessAuth)
-	handler.NewUserHandler(s.app.Group("/user"), s.appCtx.User, accessAuth)
+	handler.NewAuthHandler(v1.Group("/auth", authLimiter), s.appCtx.Auth, accessAuth, refreshAuth)
+	handler.NewRoleHandler(v1.Group("/role"), s.appCtx.Role, accessAuth)
+	handler.NewUserHandler(v1.Group("/user"), s.appCtx.User, accessAuth)
 
 	// 404 handler
 	s.app.All("*", func(c *fiber.Ctx) error {

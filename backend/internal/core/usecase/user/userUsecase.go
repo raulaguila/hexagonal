@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/raulaguila/go-api/internal/core/domain/entity"
 	"github.com/raulaguila/go-api/internal/core/dto"
 	"github.com/raulaguila/go-api/internal/core/port/input"
@@ -58,7 +59,7 @@ func (u *userUseCase) GetUserByID(ctx context.Context, id string) (*dto.UserOutp
 		return nil, apperror.UserNotFound()
 	}
 
-	return dto.EntityToUserOutput(user), nil
+	return dto.EntityToUserOutput(user, false), nil
 }
 
 // CreateUser creates a new user
@@ -118,7 +119,7 @@ func (u *userUseCase) CreateUser(ctx context.Context, input *dto.UserInput) (*dt
 		return nil, apperror.Internal(err.Error(), err)
 	}
 
-	output := dto.EntityToUserOutput(user)
+	output := dto.EntityToUserOutput(user, false)
 	output.New = nil
 	return output, nil
 }
@@ -189,7 +190,7 @@ func (u *userUseCase) UpdateUser(ctx context.Context, id string, input *dto.User
 		return nil, apperror.Internal(err.Error(), err)
 	}
 
-	return dto.EntityToUserOutput(user), nil
+	return dto.EntityToUserOutput(user, false), nil
 }
 
 // DeleteUsers deletes users by their IDs
@@ -214,17 +215,11 @@ func (u *userUseCase) DeleteUsers(ctx context.Context, ids []string) error {
 func (u *userUseCase) ResetPassword(ctx context.Context, email string) error {
 	user, err := u.repo.FindByEmail(ctx, email)
 	if err != nil {
-		return nil
+		return apperror.UserNotFound()
 	}
 
-	u.ResetPasswordHelper(user) // Helper defined locally or direct call
-	// Logic from View:
 	user.ResetPassword(time.Now())
 	return u.repo.Update(ctx, user)
-}
-
-func (u *userUseCase) ResetPasswordHelper(user *entity.User) {
-	user.ResetPassword(time.Now())
 }
 
 // SetPassword sets a user's password
@@ -238,12 +233,8 @@ func (u *userUseCase) SetPassword(ctx context.Context, email string, input *dto.
 		return apperror.UserNotFound()
 	}
 
-	// Logic: check user has password
-	// entity.Auth HasPassword check?
-	// Let's assume user.Auth.HasPassword() exists if entity definition had it or I should check user.Auth directly.
-	// Entity view showed ValidatePassword/etc.
-	// I will write:
-	if user.Auth != nil && user.Auth.Password != nil {
+	// Check if user already has a password set
+	if user.Auth != nil && user.Auth.HasPassword() {
 		return apperror.UserHasPassword()
 	}
 

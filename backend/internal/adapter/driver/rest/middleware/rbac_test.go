@@ -7,11 +7,12 @@ import (
 	"github.com/gofiber/contrib/fiberi18n/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"golang.org/x/text/language"
+
 	"github.com/raulaguila/go-api/config"
 	"github.com/raulaguila/go-api/internal/adapter/driver/rest/middleware"
 	"github.com/raulaguila/go-api/internal/core/domain/entity"
-	"github.com/stretchr/testify/assert"
-	"golang.org/x/text/language"
 )
 
 func TestRequirePermission(t *testing.T) {
@@ -24,8 +25,8 @@ func TestRequirePermission(t *testing.T) {
 		},
 		RootPath:        "locales",
 		Next:            func(c *fiber.Ctx) bool { return false },
-		AcceptLanguages: []language.Tag{language.English},
-		DefaultLanguage: language.English,
+		AcceptLanguages: []language.Tag{language.AmericanEnglish},
+		DefaultLanguage: language.AmericanEnglish,
 	}))
 
 	// Mock Auth Middleware to set user in context

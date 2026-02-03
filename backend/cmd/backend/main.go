@@ -53,7 +53,7 @@ func initLogger(cfg *config.Environment) *loggerx.Logger {
 // @contact.url 				https://github.com/raulaguila
 // @contact.email				email@email.com
 
-// @BasePath					/
+// @BasePath					/v1
 
 // @securityDefinitions.apiKey	Bearer
 // @in							header

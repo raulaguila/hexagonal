@@ -57,16 +57,13 @@ func (r *userRepository) applyFilter(ctx context.Context, filter *dto.UserFilter
 		}
 
 		if filter.Search != "" {
-			columns := []string{
-				userTable + ".name",
-				userTable + ".username",
-				userTable + ".mail",
-			}
-			var conditions []string
-			for _, col := range columns {
-				conditions = append(conditions, fmt.Sprintf("unaccent(%s) LIKE unaccent('%%%s%%')", col, filter.Search))
-			}
-			query = query.Where(strings.Join(conditions, " OR "))
+			searchPattern := "%" + filter.Search + "%"
+			query = query.Where(
+				"unaccent("+userTable+".name) ILIKE unaccent(?) OR "+
+					"unaccent("+userTable+".username) ILIKE unaccent(?) OR "+
+					"unaccent("+userTable+".mail) ILIKE unaccent(?)",
+				searchPattern, searchPattern, searchPattern,
+			)
 		}
 
 		query = r.applyOrder(query, filter)
@@ -163,20 +160,22 @@ func (r *userRepository) FindByToken(ctx context.Context, token string) (*entity
 // Create creates a new user
 func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
 	m := mapper.UserToModel(user)
-	// FullSaveAssociations: true is generally good, but for many-to-many creation it might duplicate roles if not careful.
-	// But Omit("Roles") might be safer if we assume Roles already exist and we are just linking.
-	// For new user creation, Auth is new, User is new. Roles are likely existing references.
 
 	err := r.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.WithContext(ctx).Create(m).Error; err != nil {
+		// First create the user without roles
+		if err := tx.WithContext(ctx).Omit("Roles").Create(m).Error; err != nil {
 			return err
 		}
-		// Save relations manually if needed or rely on GORM.
-		// If m.Roles has nested struct with ID, GORM tries to update using those IDs.
-		// It's safer to use Omit(clause.Associations) if we want very manual, but here let's trust GORM config
+
+		// Then add role associations if any exist
+		if len(m.Roles) > 0 {
+			if err := tx.Model(m).Association("Roles").Replace(m.Roles); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}

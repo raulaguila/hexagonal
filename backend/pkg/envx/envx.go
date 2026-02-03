@@ -3,7 +3,6 @@ package envx
 import (
 	"encoding"
 	"fmt"
-
 	"os"
 	"reflect"
 	"strings"
@@ -247,7 +246,7 @@ func loadDotEnvWithOverride(path string, override bool) error {
 
 		// Only set if not already set (unless override)
 		if override || os.Getenv(key) == "" {
-			os.Setenv(key, value)
+			_ = os.Setenv(key, value)
 		}
 	}
 
@@ -295,10 +294,10 @@ func ExportWithPrefix(prefix string) map[string]string {
 
 // Set sets an environment variable.
 func Set(key, value string) {
-	os.Setenv(key, value)
+	_ = os.Setenv(key, value)
 }
 
 // Unset removes an environment variable.
 func Unset(key string) {
-	os.Unsetenv(key)
+	_ = os.Unsetenv(key)
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/raulaguila/go-api/internal/core/domain/entity"
 	"github.com/raulaguila/go-api/internal/core/dto"
 	"github.com/raulaguila/go-api/internal/core/port/input"
@@ -92,7 +93,11 @@ func (uc *roleUseCase) CreateRole(ctx context.Context, input *dto.RoleInput) (*d
 		utils.Deref(input.Name, ""),
 		utils.Deref(input.Permissions, []string{}),
 	)
-	// No error return from NewRole as seen in previous view_file (it returns *Role)
+
+	// Set enabled status if provided (defaults to true in NewRole)
+	if input.Enabled != nil {
+		role.Enabled = *input.Enabled
+	}
 
 	if err := role.Validate(); err != nil {
 		return nil, err
@@ -126,6 +131,9 @@ func (uc *roleUseCase) UpdateRole(ctx context.Context, id string, input *dto.Rol
 	}
 	if input.Permissions != nil {
 		role.UpdatePermissions(*input.Permissions, time.Now())
+	}
+	if input.Enabled != nil {
+		role.SetEnabled(*input.Enabled, time.Now())
 	}
 
 	if err := role.Validate(); err != nil {

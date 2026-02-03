@@ -34,3 +34,20 @@ nonExistentRoute: A rota não existe nesta API.
 manyRequests: Você realizou muitas requisições em um curto período de tempo! Por favor, aguarde um minuto!
 unauthorized: Acesso não autorizado.
 forbidden: Acesso negado.
+
+# Novos códigos de erro
+INTERNAL_ERROR: Ocorreu um erro interno, tente novamente mais tarde.
+DATABASE_ERROR: Ocorreu um erro de banco de dados, tente novamente mais tarde.
+EXTERNAL_SERVICE_ERROR: Ocorreu um erro de serviço externo, tente novamente mais tarde.
+TOKEN_EXPIRED: Sua sessão expirou, por favor faça login novamente.
+NOT_FOUND: O recurso solicitado não foi encontrado.
+ALREADY_EXISTS: Este recurso já existe.
+CONFLICT: Ocorreu um conflito com o estado atual.
+RESOURCE_IN_USE: Este recurso está em uso e não pode ser excluído.
+INVALID_INPUT: Entrada inválida fornecida.
+VALIDATION_FAILED: Validação falhou, verifique seus dados.
+ROLE_NOT_FOUND: Perfil não encontrado.
+PASSWORD_MISMATCH: As senhas não correspondem.
+roleCreated: Perfil criado com sucesso.
+roleUpdated: Perfil atualizado com sucesso.
+roleDeleted: Perfil(s) deletado(s) com sucesso.

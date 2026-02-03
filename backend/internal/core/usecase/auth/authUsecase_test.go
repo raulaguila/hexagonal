@@ -117,7 +117,7 @@ func TestLogin_Success(t *testing.T) {
 
 	// Create user with hashed password
 	authUser, _ := entity.NewAuth(true)
-	authUser.SetPassword(password, time.Now())
+	_ = authUser.SetPassword(password, time.Now())
 	user, _ := entity.NewUser("Test User", username, "test@example.com", authUser)
 
 	mockRepo.On("FindByUsername", ctx, username).Return(user, nil)
@@ -172,7 +172,7 @@ func TestLogin_InvalidPassword(t *testing.T) {
 	password := "password123"
 
 	authUser, _ := entity.NewAuth(true)
-	authUser.SetPassword(password, time.Now())
+	_ = authUser.SetPassword(password, time.Now())
 	user, _ := entity.NewUser("Test User", username, "test@example.com", authUser)
 
 	mockRepo.On("FindByUsername", ctx, username).Return(user, nil)
@@ -200,7 +200,7 @@ func TestLogin_DisabledUser(t *testing.T) {
 	password := "password123"
 
 	authUser, _ := entity.NewAuth(false) // Disabled
-	authUser.SetPassword(password, time.Now())
+	_ = authUser.SetPassword(password, time.Now())
 	user, _ := entity.NewUser("Disabled User", username, "disabled@example.com", authUser)
 
 	mockRepo.On("FindByUsername", ctx, username).Return(user, nil)

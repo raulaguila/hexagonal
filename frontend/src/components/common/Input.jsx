@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Input = ({ label, error, ...props }) => {
+const Input = ({ label, error, icon: Icon, ...props }) => {
     return (
         <div style={{ marginBottom: '1rem' }}>
             {label && (
@@ -14,22 +14,39 @@ const Input = ({ label, error, ...props }) => {
                     {label}
                 </label>
             )}
-            <input
-                style={{
-                    width: '100%',
-                    padding: '0.625rem 0.875rem',
-                    borderRadius: 'var(--radius-md)',
-                    border: `1px solid ${error ? 'var(--color-error)' : 'var(--color-border)'}`,
-                    backgroundColor: 'var(--color-surface)',
-                    color: 'var(--color-text-main)',
-                    fontSize: '0.875rem',
-                    outline: 'none',
-                    transition: 'border-color 0.2s',
-                }}
-                onFocus={(e) => e.currentTarget.style.borderColor = 'var(--color-primary)'}
-                onBlur={(e) => e.currentTarget.style.borderColor = error ? 'var(--color-error)' : 'var(--color-border)'}
-                {...props}
-            />
+            <div style={{ position: 'relative' }}>
+                {Icon && (
+                    <div style={{
+                        position: 'absolute',
+                        left: '0.75rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'var(--color-text-muted)',
+                        display: 'flex',
+                        pointerEvents: 'none'
+                    }}>
+                        <Icon size={18} />
+                    </div>
+                )}
+                <input
+                    style={{
+                        width: '100%',
+                        padding: '0.625rem 0.875rem',
+                        paddingLeft: Icon ? '2.5rem' : '0.875rem',
+                        borderRadius: 'var(--radius-md)',
+                        border: `1px solid ${error ? 'var(--color-error)' : 'var(--color-border)'}`,
+                        backgroundColor: 'var(--color-surface)',
+                        color: 'var(--color-text-main)',
+                        fontSize: '0.875rem',
+                        outline: 'none',
+                        transition: 'border-color 0.2s',
+                        ...props.style
+                    }}
+                    onFocus={(e) => e.currentTarget.style.borderColor = 'var(--color-primary)'}
+                    onBlur={(e) => e.currentTarget.style.borderColor = error ? 'var(--color-error)' : 'var(--color-border)'}
+                    {...props}
+                />
+            </div>
             {error && (
                 <span style={{ display: 'block', marginTop: '0.25rem', fontSize: '0.75rem', color: 'var(--color-error)' }}>
                     {error}

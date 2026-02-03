@@ -8,8 +8,8 @@ import (
 func TestEnvVar(t *testing.T) {
 	// Setup
 	key := "TEST_ENV_VAR"
-	os.Setenv(key, "test_value")
-	defer os.Unsetenv(key)
+	_ = os.Setenv(key, "test_value")
+	defer func() { _ = os.Unsetenv(key) }()
 
 	t.Run("New String", func(t *testing.T) {
 		v := New[string](key)
@@ -34,8 +34,8 @@ func TestEnvVar(t *testing.T) {
 	})
 
 	t.Run("With Prefix", func(t *testing.T) {
-		os.Setenv("APP_PORT", "8080")
-		defer os.Unsetenv("APP_PORT")
+		_ = os.Setenv("APP_PORT", "8080")
+		defer func() { _ = os.Unsetenv("APP_PORT") }()
 
 		v := New[int]("PORT").WithPrefix("APP")
 		if val := v.Get(); val != 8080 {
@@ -47,12 +47,12 @@ func TestEnvVar(t *testing.T) {
 func TestLoadDotEnv(t *testing.T) {
 	content := []byte("TEST_KEY=test_value\n# Comment\nQUOTED=\"value with spaces\"")
 	filename := ".env.test"
-	if err := os.WriteFile(filename, content, 0644); err != nil {
+	if err := os.WriteFile(filename, content, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove(filename)
-	defer os.Unsetenv("TEST_KEY")
-	defer os.Unsetenv("QUOTED")
+	defer func() { _ = os.Remove(filename) }()
+	defer func() { _ = os.Unsetenv("TEST_KEY") }()
+	defer func() { _ = os.Unsetenv("QUOTED") }()
 
 	if err := LoadDotEnv(filename); err != nil {
 		t.Fatalf("LoadDotEnv failed: %v", err)
@@ -67,10 +67,10 @@ func TestLoadDotEnv(t *testing.T) {
 }
 
 func TestParsers(t *testing.T) {
-	os.Setenv("INT_VAL", "123")
-	os.Setenv("BOOL_VAL", "true")
-	defer os.Unsetenv("INT_VAL")
-	defer os.Unsetenv("BOOL_VAL")
+	_ = os.Setenv("INT_VAL", "123")
+	_ = os.Setenv("BOOL_VAL", "true")
+	defer func() { _ = os.Unsetenv("INT_VAL") }()
+	defer func() { _ = os.Unsetenv("BOOL_VAL") }()
 
 	if v := New[int]("INT_VAL").Get(); v != 123 {
 		t.Errorf("Expected 123, got %v", v)

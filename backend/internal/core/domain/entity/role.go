@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/raulaguila/go-api/pkg/validator"
 )
 
@@ -13,6 +14,7 @@ type Role struct {
 	ID          uuid.UUID
 	Name        string
 	Permissions []string
+	Enabled     bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -24,6 +26,7 @@ func NewRole(name string, permissions []string) *Role {
 		ID:          uuid.New(), // Generate new UUID
 		Name:        name,
 		Permissions: permissions,
+		Enabled:     true, // Roles are enabled by default
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}
@@ -57,4 +60,15 @@ func (r *Role) HasPermission(permission string) bool {
 // IsRoot checks if this is the root role
 func (r *Role) IsRoot() bool {
 	return r.Name == "ROOT"
+}
+
+// IsEnabled checks if the role is enabled
+func (r *Role) IsEnabled() bool {
+	return r.Enabled
+}
+
+// SetEnabled sets the enabled status of the role
+func (r *Role) SetEnabled(enabled bool, now time.Time) {
+	r.Enabled = enabled
+	r.UpdatedAt = now
 }

@@ -1,250 +1,512 @@
-import React, { useEffect, useState } from 'react';
-import api from '../utils/api';
-import { Table, Thead, Tbody, Tr, Th, Td } from '../components/common/Table';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Plus, Search, Pen, Trash2, User, Mail } from 'lucide-react';
+import { useToast } from '../components/feedback/ToastProvider';
+import { useUsers, useRoles, usePermissions } from '../hooks';
+import { userService } from '../services/userService';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
-import Input from '../components/common/Input';
-import { Plus, Trash2, Edit2, User } from 'lucide-react';
+import Badge from '../components/common/Badge';
+import EmptyState from '../components/common/EmptyState';
+import { ConfirmDialog, SkeletonTableRow } from '../components/feedback';
+import { Table, Thead, Tbody, Tr, Th, Td } from '../components/common/Table';
+import Pagination from '../components/common/Pagination';
+import { usePreferences } from '../context/PreferencesContext';
+
+// Styled search input component
+const SearchInput = ({ value, onChange, onKeyDown, placeholder }) => (
+    <input
+        type="text"
+        value={value}
+        onChange={onChange}
+        onKeyDown={onKeyDown}
+        placeholder={placeholder}
+        style={{
+            flex: 1,
+            padding: '0.625rem 1rem',
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 'var(--radius-md)',
+            fontSize: '0.875rem',
+            color: 'var(--color-text-main)',
+            outline: 'none',
+            transition: 'border-color 0.2s, box-shadow 0.2s'
+        }}
+        onFocus={(e) => {
+            e.target.style.borderColor = 'var(--color-primary)';
+            e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
+        }}
+        onBlur={(e) => {
+            e.target.style.borderColor = 'var(--color-border)';
+            e.target.style.boxShadow = 'none';
+        }}
+    />
+);
 
 const UsersPage = () => {
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [formData, setFormData] = useState({ name: '', username: '', mail: '', role_ids: [], status: true });
-    const [creating, setCreating] = useState(false);
+    const toast = useToast();
+    const { t } = usePreferences();
+    const { hasPermission, isRoot } = usePermissions();
 
-    // Fetch Users
-    const fetchUsers = async () => {
-        try {
-            const { data } = await api.get('/user');
-            // Handle both paginated ({ items: [] }) and array responses
-            setUsers(Array.isArray(data) ? data : data.items || []);
-        } catch (error) {
-            console.error("Failed to fetch users", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Data hooks
+    const { users, loading, pagination, fetchUsers, deleteUser: removeUser } = useUsers();
+    const { roles, fetchRoles } = useRoles();
 
+    // Local state
+    const [search, setSearch] = useState('');
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [saving, setSaving] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        username: '',
+        mail: '',
+        role_ids: [],
+        status: true
+    });
+
+    // Confirm dialog state
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleting, setDeleting] = useState(false);
+
+    // Fetch data on mount
     useEffect(() => {
-        fetchUsers();
+        fetchUsers({ page: 1, limit: 10, search: '' });
         fetchRoles();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const [availableRoles, setAvailableRoles] = useState([]);
+    // Search handler - only on button click
+    const handleSearch = useCallback(() => {
+        fetchUsers({ page: 1, limit: pagination.limit || 10, search });
+    }, [fetchUsers, pagination.limit, search]);
 
-    const fetchRoles = async () => {
-        try {
-            const { data } = await api.get('/role');
-            setAvailableRoles(Array.isArray(data) ? data : data.items || []);
-        } catch (error) {
-            console.error("Failed to fetch roles", error);
+    // Handle Enter key in search
+    const handleSearchKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            handleSearch();
         }
     };
 
-    const [editingId, setEditingId] = useState(null);
+    // Page change handler
+    const handlePageChange = (page) => {
+        fetchUsers({ page, limit: pagination.limit || 10, search });
+    };
 
+    // Open edit modal
     const handleEdit = (user) => {
         setFormData({
             name: user.name,
-            username: user.corp_id, // backend uses corp_id for username output
+            username: user.username,
             mail: user.email,
             role_ids: user.roles ? user.roles.map(r => r.id) : [],
             status: user.status !== undefined ? user.status : true
         });
         setEditingId(user.id);
-        setIsModalOpen(true);
+        setModalOpen(true);
     };
 
+    // Open create modal
+    const handleCreate = () => {
+        setFormData({
+            name: '',
+            username: '',
+            mail: '',
+            role_ids: [],
+            status: true
+        });
+        setEditingId(null);
+        setModalOpen(true);
+    };
+
+    // Submit form
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setCreating(true);
+        setSaving(true);
+
         try {
+            const payload = {
+                name: formData.name,
+                username: formData.username,
+                email: formData.mail,
+                role_ids: formData.role_ids,
+                status: formData.status
+            };
+
             if (editingId) {
-                // Update user
-                const { data } = await api.put(`/user/${editingId}`, {
-                    name: formData.name,
-                    username: formData.username,
-                    email: formData.mail,
-                    role_ids: formData.role_ids,
-                    status: formData.status
-                });
-                setUsers(users.map(u => u.id === editingId ? data : u));
-                alert("User updated successfully");
+                await userService.updateUser(editingId, payload);
+                toast.success(t('users.updated') || 'User updated successfully');
             } else {
-                // Create user
-                const { data } = await api.post('/user', {
-                    name: formData.name,
-                    username: formData.username,
-                    email: formData.mail,
-                    role_ids: formData.role_ids,
-                    status: formData.status
-                });
-                setUsers([...users, data]);
-                alert("User created successfully");
+                await userService.createUser(payload);
+                toast.success(t('users.created') || 'User created successfully');
             }
-            setIsModalOpen(false);
-            setFormData({ name: '', username: '', mail: '' });
-            setEditingId(null);
+
+            setModalOpen(false);
+            fetchUsers({ page: pagination.page || 1, limit: pagination.limit || 10, search });
         } catch (error) {
-            alert("Failed to save user: " + (error.response?.data?.message || error.message));
+            toast.error(error.response?.data?.message || 'Failed to save user');
         } finally {
-            setCreating(false);
+            setSaving(false);
         }
     };
 
-    const openCreateModal = () => {
-        setFormData({ name: '', username: '', mail: '', role_ids: [], status: true });
-        setEditingId(null);
-        setIsModalOpen(true);
+    // Delete confirmation
+    const handleDeleteClick = (user) => {
+        setDeleteTarget(user);
+        setConfirmOpen(true);
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this user?")) return;
+    // Confirm delete
+    const handleConfirmDelete = async () => {
+        if (!deleteTarget) return;
+
+        setDeleting(true);
         try {
-            // API expects { ids: [id] } body for delete?
-            // Handler: deleteUser -> idsBodyDTO -> IDsInput { IDs []string }
-            await api.delete('/user', { data: { ids: [id] } });
-            setUsers(users.filter(u => u.id !== id));
-        } catch (error) {
-            alert("Failed to delete user");
+            await removeUser(deleteTarget.id);
+            toast.success(t('users.deleted') || 'User deleted successfully');
+            setConfirmOpen(false);
+            setDeleteTarget(null);
+        } catch {
+            toast.error('Failed to delete user');
+        } finally {
+            setDeleting(false);
         }
     };
+
+    // Check permissions
+    const canCreate = hasPermission('users:create') || isRoot();
+    const canEdit = hasPermission('users:edit') || isRoot();
+    const canDelete = hasPermission('users:delete') || isRoot();
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <div>
-                    <h1 style={{ fontSize: '1.875rem', fontWeight: 700, margin: 0 }}>Users</h1>
-                    <p style={{ color: 'var(--color-text-secondary)' }}>Manage system access and profiles</p>
-                </div>
-                <Button onClick={openCreateModal}>
-                    <Plus size={18} />
-                    Add User
-                </Button>
+            {/* Header */}
+            <div style={{ marginBottom: '1.5rem' }}>
+                <h1 style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    margin: 0,
+                    color: 'var(--color-text-main)'
+                }}>
+                    {t('users.title') || 'Users'}
+                </h1>
+                <p style={{
+                    color: 'var(--color-text-secondary)',
+                    marginTop: '0.25rem',
+                    fontSize: '0.875rem'
+                }}>
+                    {t('users.subtitle') || 'Manage system access and profiles'}
+                </p>
             </div>
 
-            <Table>
-                <Thead>
-                    <Tr>
-                        <Th>User</Th>
-                        <Th>Details</Th>
-                        <Th>Roles</Th>
-                        <Th>Actions</Th>
-                    </Tr>
-                </Thead>
-                <Tbody>
-                    {users.map(user => (
-                        <Tr key={user.id}>
-                            <Td>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                    <div style={{
-                                        width: '40px', height: '40px', borderRadius: '50%',
-                                        backgroundColor: 'var(--color-primary-light)',
-                                        color: 'var(--color-primary)',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                    }}>
-                                        <User size={20} />
-                                    </div>
-                                    <div>
-                                        <div style={{ fontWeight: 500 }}>{user.name}</div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>@{user.corp_id}</div>
-                                    </div>
-                                </div>
-                            </Td>
-                            <Td>{user.email}</Td>
-                            <Td>
-                                <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                                    {user.roles && user.roles.map(role => (
-                                        <span key={role.id} style={{
-                                            fontSize: '0.75rem',
-                                            padding: '0.125rem 0.5rem',
-                                            borderRadius: '999px',
-                                            backgroundColor: 'var(--color-background)',
-                                            border: '1px solid var(--color-border)',
-                                            color: 'var(--color-text-secondary)'
-                                        }}>
-                                            {role.name}
-                                        </span>
-                                    ))}
-                                </div>
-                            </Td>
-                            <Td>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <button
-                                        onClick={() => handleEdit(user)}
-                                        style={{ color: 'var(--color-text-secondary)', background: 'none', cursor: 'pointer' }}
-                                        title="Edit"
-                                    >
-                                        <Edit2 size={18} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(user.id)}
-                                        style={{ color: 'var(--color-error)', background: 'none', cursor: 'pointer' }}
-                                        title="Delete"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                </div>
-                            </Td>
-                        </Tr>
-                    ))}
-                    {!loading && users.length === 0 && (
-                        <Tr>
-                            <Td colSpan={4} style={{ textAlign: 'center', padding: '3rem' }}>
-                                No users found.
-                            </Td>
-                        </Tr>
-                    )}
-                </Tbody>
-            </Table>
+            {/* Search and Actions Row */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem',
+                gap: '1rem'
+            }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flex: 1, maxWidth: '400px' }}>
+                    <SearchInput
+                        placeholder={t('users.search_placeholder') || 'Search users...'}
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        onKeyDown={handleSearchKeyDown}
+                    />
+                    <Button variant="secondary" onClick={handleSearch}>
+                        <Search size={18} />
+                    </Button>
+                </div>
 
+                {canCreate && (
+                    <Button onClick={handleCreate} variant="primary">
+                        <Plus size={18} />
+                        {t('users.add') || 'Add User'}
+                    </Button>
+                )}
+            </div>
+
+            {/* Table */}
+            <div style={{
+                backgroundColor: 'var(--color-surface)',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--color-border)',
+                overflow: 'hidden'
+            }}>
+                <Table>
+                    <Thead>
+                        <Tr>
+                            <Th>{t('users.table.user') || 'User'}</Th>
+                            <Th>{t('users.table.contact') || 'Contact'}</Th>
+                            <Th>{t('users.table.roles') || 'Roles'}</Th>
+                            <Th>{t('users.table.status') || 'Status'}</Th>
+                            <Th style={{ textAlign: 'center' }}>{t('users.table.actions') || 'Actions'}</Th>
+                        </Tr>
+                    </Thead>
+                    <Tbody>
+                        {loading ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <SkeletonTableRow key={i} columns={5} />
+                            ))
+                        ) : users.length === 0 ? (
+                            <Tr>
+                                <Td colSpan={5}>
+                                    <EmptyState
+                                        icon={User}
+                                        title={t('users.empty') || 'No users found'}
+                                        description={search ? t('users.empty_search') : 'Get started by creating a new user.'}
+                                        actionLabel={t('users.add') || 'Add User'}
+                                        onAction={canCreate ? handleCreate : null}
+                                    />
+                                </Td>
+                            </Tr>
+                        ) : (
+                            users.map(user => (
+                                <Tr key={user.id} className="table-row">
+                                    {/* User Info */}
+                                    <Td>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <div style={{
+                                                width: '40px',
+                                                height: '40px',
+                                                borderRadius: '50%',
+                                                background: 'linear-gradient(135deg, var(--color-primary-light), var(--color-surface))',
+                                                color: 'var(--color-primary)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                fontWeight: 600,
+                                                fontSize: '1rem',
+                                                border: '1px solid var(--color-border)'
+                                            }}>
+                                                {user.name?.charAt(0) || '?'}
+                                            </div>
+                                            <div>
+                                                <div style={{ fontWeight: 500, color: 'var(--color-text-main)' }}>
+                                                    {user.name}
+                                                </div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                                                    @{user.username}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Td>
+
+                                    {/* Contact */}
+                                    <Td>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-secondary)' }}>
+                                            <Mail size={14} />
+                                            <span style={{ fontSize: '0.875rem' }}>{user.email}</span>
+                                        </div>
+                                    </Td>
+
+                                    {/* Roles */}
+                                    <Td>
+                                        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                                            {user.roles?.slice(0, 2).map(role => (
+                                                <Badge key={role.id} variant="default" size="sm">
+                                                    {role.name}
+                                                </Badge>
+                                            ))}
+                                            {user.roles?.length > 2 && (
+                                                <Badge variant="default" size="sm">
+                                                    +{user.roles.length - 2}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </Td>
+
+                                    {/* Status */}
+                                    <Td>
+                                        {user.status ? (
+                                            <Badge variant="success" size="sm" dot>
+                                                {t('common.active') || 'Active'}
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="default" size="sm" dot>
+                                                {t('common.inactive') || 'Inactive'}
+                                            </Badge>
+                                        )}
+                                    </Td>
+
+                                    {/* Actions - Centered */}
+                                    <Td style={{ textAlign: 'center' }}>
+                                        <div style={{ display: 'inline-flex', gap: '0.25rem', justifyContent: 'center' }}>
+                                            {canEdit && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleEdit(user)}
+                                                    style={{ padding: '0.375rem' }}
+                                                >
+                                                    <Pen size={16} />
+                                                </Button>
+                                            )}
+                                            {canDelete && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => handleDeleteClick(user)}
+                                                    style={{ padding: '0.375rem', color: 'var(--color-error)' }}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </Td>
+                                </Tr>
+                            ))
+                        )}
+                    </Tbody>
+                </Table>
+
+                {/* Pagination */}
+                {!loading && users.length > 0 && (
+                    <Pagination
+                        currentPage={pagination.page || 1}
+                        totalPages={pagination.totalPages || 1}
+                        totalItems={pagination.total || users.length}
+                        itemsPerPage={pagination.limit || 10}
+                        onPageChange={handlePageChange}
+                        t={t}
+                    />
+                )}
+            </div>
+
+            {/* Create/Edit Modal */}
             <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title={editingId ? "Edit User" : "Create New User"}
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                title={editingId ? t('user.modal.edit_title') : t('user.modal.create_title')}
+                size="md"
             >
                 <form onSubmit={handleSubmit}>
-                    <Input
-                        label="Full Name"
-                        value={formData.name}
-                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        required
-                        placeholder="John Doe"
-                    />
-                    <Input
-                        label="Username"
-                        value={formData.username}
-                        onChange={e => setFormData({ ...formData, username: e.target.value })}
-                        required
-                        placeholder="jdoe"
-                    />
-                    <Input
-                        label="Email"
-                        type="email"
-                        value={formData.mail}
-                        onChange={e => setFormData({ ...formData, mail: e.target.value })}
-                        required
-                        placeholder="john@example.com"
-                    />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div style={{ gridColumn: 'span 2' }}>
+                            <label style={{
+                                display: 'block',
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                marginBottom: '0.5rem',
+                                color: 'var(--color-text-main)'
+                            }}>
+                                {t('user.form.name') || 'Full Name'}
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                required
+                                placeholder="e.g. John Doe"
+                                style={{
+                                    width: '100%',
+                                    padding: '0.625rem 1rem',
+                                    backgroundColor: 'var(--color-background)',
+                                    border: '1px solid var(--color-border)',
+                                    borderRadius: 'var(--radius-md)',
+                                    fontSize: '0.875rem',
+                                    color: 'var(--color-text-main)',
+                                    outline: 'none',
+                                    boxSizing: 'border-box'
+                                }}
+                            />
+                        </div>
+                        <div>
+                            <label style={{
+                                display: 'block',
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                marginBottom: '0.5rem',
+                                color: 'var(--color-text-main)'
+                            }}>
+                                {t('user.form.username') || 'Username'}
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.username}
+                                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                required
+                                placeholder="e.g. jdoe"
+                                style={{
+                                    width: '100%',
+                                    padding: '0.625rem 1rem',
+                                    backgroundColor: 'var(--color-background)',
+                                    border: '1px solid var(--color-border)',
+                                    borderRadius: 'var(--radius-md)',
+                                    fontSize: '0.875rem',
+                                    color: 'var(--color-text-main)',
+                                    outline: 'none',
+                                    boxSizing: 'border-box'
+                                }}
+                            />
+                        </div>
+                        <div>
+                            <label style={{
+                                display: 'block',
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                marginBottom: '0.5rem',
+                                color: 'var(--color-text-main)'
+                            }}>
+                                {t('user.form.email') || 'Email'}
+                            </label>
+                            <input
+                                type="email"
+                                value={formData.mail}
+                                onChange={(e) => setFormData({ ...formData, mail: e.target.value })}
+                                required
+                                placeholder="john@example.com"
+                                style={{
+                                    width: '100%',
+                                    padding: '0.625rem 1rem',
+                                    backgroundColor: 'var(--color-background)',
+                                    border: '1px solid var(--color-border)',
+                                    borderRadius: 'var(--radius-md)',
+                                    fontSize: '0.875rem',
+                                    color: 'var(--color-text-main)',
+                                    outline: 'none',
+                                    boxSizing: 'border-box'
+                                }}
+                            />
+                        </div>
+                    </div>
 
-                    {/* Role Selection */}
+                    {/* Roles Selection */}
                     <div style={{ marginTop: '1rem' }}>
-                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem', color: 'var(--color-text-main)' }}>
-                            Roles
+                        <label style={{
+                            display: 'block',
+                            fontSize: '0.875rem',
+                            fontWeight: 500,
+                            marginBottom: '0.5rem',
+                            color: 'var(--color-text-main)'
+                        }}>
+                            {t('user.form.roles') || 'Assign Roles'}
                         </label>
                         <div style={{
                             display: 'grid',
-                            gridTemplateColumns: 'repeat(2, 1fr)',
-                            gap: '0.5rem',
-                            padding: '0.5rem',
-                            border: '1px solid var(--color-border)',
-                            borderRadius: 'var(--radius-md)',
-                            maxHeight: '150px',
-                            overflowY: 'auto'
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                            gap: '0.5rem'
                         }}>
-                            {availableRoles.map(role => (
-                                <label key={role.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', cursor: 'pointer' }}>
+                            {roles.map(role => (
+                                <label
+                                    key={role.id}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        padding: '0.5rem 0.75rem',
+                                        borderRadius: 'var(--radius-md)',
+                                        border: formData.role_ids.includes(role.id)
+                                            ? '1px solid var(--color-primary)'
+                                            : '1px solid var(--color-border)',
+                                        backgroundColor: formData.role_ids.includes(role.id)
+                                            ? 'var(--color-primary-light)'
+                                            : 'var(--color-surface)',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.15s'
+                                    }}
+                                >
                                     <input
                                         type="checkbox"
                                         checked={formData.role_ids.includes(role.id)}
@@ -256,33 +518,77 @@ const UsersPage = () => {
                                         }}
                                         style={{ accentColor: 'var(--color-primary)' }}
                                     />
-                                    {role.name}
+                                    <span style={{
+                                        fontSize: '0.875rem',
+                                        fontWeight: formData.role_ids.includes(role.id) ? 600 : 400,
+                                        color: formData.role_ids.includes(role.id)
+                                            ? 'var(--color-primary)'
+                                            : 'var(--color-text-main)'
+                                    }}>
+                                        {role.name}
+                                    </span>
                                 </label>
                             ))}
                         </div>
                     </div>
 
-                    {/* Status Toggle (Only for editing or if supported during create) */}
+                    {/* Status Toggle */}
                     <div style={{ marginTop: '1rem' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer', color: 'var(--color-text-main)' }}>
+                        <label style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            cursor: 'pointer'
+                        }}>
                             <input
                                 type="checkbox"
                                 checked={formData.status}
-                                onChange={e => setFormData({ ...formData, status: e.target.checked })}
-                                style={{ accentColor: 'var(--color-primary)' }}
+                                onChange={(e) => setFormData({ ...formData, status: e.target.checked })}
+                                style={{
+                                    width: '18px',
+                                    height: '18px',
+                                    accentColor: 'var(--color-primary)'
+                                }}
                             />
-                            Active User
+                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-main)' }}>
+                                {t('user.form.active') || 'User is active'}
+                            </span>
                         </label>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-                        <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button type="submit" disabled={creating}>
-                            {creating ? 'Saving...' : (editingId ? 'Update User' : 'Create User')}
+                    {/* Actions */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        gap: '0.75rem',
+                        marginTop: '1.5rem',
+                        paddingTop: '1rem',
+                        borderTop: '1px solid var(--color-border)'
+                    }}>
+                        <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
+                            {t('user.form.cancel') || 'Cancel'}
+                        </Button>
+                        <Button type="submit" variant="primary" loading={saving}>
+                            {editingId ? (t('user.form.update') || 'Save Changes') : (t('user.form.save') || 'Create User')}
                         </Button>
                     </div>
                 </form>
             </Modal>
+
+            {/* Delete Confirmation */}
+            <ConfirmDialog
+                isOpen={confirmOpen}
+                onClose={() => {
+                    setConfirmOpen(false);
+                    setDeleteTarget(null);
+                }}
+                onConfirm={handleConfirmDelete}
+                title="Delete User"
+                message={t('users.delete_confirm') || `Are you sure you want to delete "${deleteTarget?.name}"?`}
+                confirmText="Delete"
+                variant="danger"
+                loading={deleting}
+            />
         </div>
     );
 };

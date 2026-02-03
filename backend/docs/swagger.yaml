@@ -1,4 +1,4 @@
-basePath: /
+basePath: /v1
 definitions:
   github_com_raulaguila_go-api_internal_adapter_driver_rest_presenter.Response:
     properties:

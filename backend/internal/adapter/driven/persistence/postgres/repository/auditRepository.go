@@ -3,11 +3,12 @@ package repository
 import (
 	"context"
 
+	"gorm.io/gorm"
+
 	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres/model"
 	"github.com/raulaguila/go-api/internal/core/domain/entity"
 	"github.com/raulaguila/go-api/internal/core/port/output"
 	"github.com/raulaguila/go-api/pkg/apperror"
-	"gorm.io/gorm"
 )
 
 type auditRepository struct {

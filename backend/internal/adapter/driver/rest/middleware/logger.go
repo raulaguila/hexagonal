@@ -2,18 +2,26 @@ package middleware
 
 import (
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"github.com/raulaguila/go-api/pkg/loggerx"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/raulaguila/go-api/pkg/loggerx"
 )
 
 // RequestLogger returns a middleware that logs HTTP requests using loggerx
 func RequestLogger(log *loggerx.Logger) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		start := time.Now()
+
+		// Call next handler
+		err := c.Next()
+
+		// Calculate duration
+		duration := time.Since(start)
 
 		// Generate RequestID if not present
 		reqID := c.Get(fiber.HeaderXRequestID)
@@ -29,22 +37,24 @@ func RequestLogger(log *loggerx.Logger) fiber.Handler {
 			traceID = spanCtx.TraceID().String()
 		}
 
-		// Call next handler
-		err := c.Next()
-
 		// Determine log level
-		duration := time.Since(start)
 		status := c.Response().StatusCode()
 
 		// Build log fields
 		fields := map[string]any{
 			"status":     status,
 			"method":     c.Method(),
-			"path":       c.Path(),
+			"path":       c.OriginalURL(),
 			"ip":         c.IP(),
 			"latency":    duration.String(),
 			"request_id": reqID,
 			"pid":        os.Getpid(),
+		}
+
+		// Get Authorization if available
+		authorization := c.Get(fiber.HeaderAuthorization)
+		if authorization != "" {
+			fields["authorization"] = strings.ReplaceAll(authorization, "Bearer ", "")[:min(len(authorization), 10)]
 		}
 
 		if traceID != "" {

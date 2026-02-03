@@ -5,13 +5,14 @@ type RoleOutput struct {
 	ID          *string   `json:"id,omitempty"`
 	Name        *string   `json:"name,omitempty"`
 	Permissions *[]string `json:"permissions,omitempty"`
+	Enabled     *bool     `json:"enabled,omitempty"`
 }
 
 // UserOutput represents output data for a user
 type UserOutput struct {
 	ID       *string       `json:"id,omitempty"`
 	Name     *string       `json:"name,omitempty"`
-	Username *string       `json:"corp_id,omitempty"`
+	Username *string       `json:"username,omitempty"`
 	Email    *string       `json:"email,omitempty"`
 	Status   *bool         `json:"status,omitempty"`
 	New      *bool         `json:"new,omitempty"`

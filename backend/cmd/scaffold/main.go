@@ -87,7 +87,7 @@ func main() {
 func generateFile(path string, tmplContent string, cfg Config) error {
 	// Create directories if not exist
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
 
@@ -100,7 +100,7 @@ func generateFile(path string, tmplContent string, cfg Config) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	t, err := template.New("file").Parse(tmplContent)
 	if err != nil {

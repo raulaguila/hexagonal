@@ -3,8 +3,9 @@ package entity_test
 import (
 	"testing"
 
-	"github.com/raulaguila/go-api/internal/core/domain/entity"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/raulaguila/go-api/internal/core/domain/entity"
 )
 
 func TestNewUser(t *testing.T) {

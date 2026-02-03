@@ -25,9 +25,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-var (
-	baseURL string
-)
+var baseURL string
 
 func TestMain(m *testing.M) {
 	// Setup Context
@@ -89,8 +87,8 @@ func TestMain(m *testing.M) {
 	}
 
 	// --- 3. Configure Application ---
-	os.Setenv("PORT", "9998")
-	os.Setenv("LOG_LEVEL", "error")
+	_ = os.Setenv("PORT", "9998")
+	_ = os.Setenv("LOG_LEVEL", "error")
 
 	cfg := config.MustLoad()
 	cfg.Port = 9998
@@ -176,7 +174,7 @@ func TestMain(m *testing.M) {
 	// Start server in goroutine
 	go func() {
 		if err := server.Start(); err != nil {
-			// fmt.Printf("Server stopped: %v\n", err)
+			fmt.Printf("Server stopped: %v\n", err)
 		}
 	}()
 
@@ -207,10 +205,13 @@ func TestMain(m *testing.M) {
 	}
 	_ = auth.SetPassword("password", time.Now())
 	user, err := entity.NewUser("Test User", "testuser", "test@test.com", auth)
+	if err != nil {
+		fmt.Printf("Failed to create user entity: %v\n", err)
+		os.Exit(1)
+	}
 
 	if err := userRepo.Create(ctx, user); err != nil {
-		// Since we have a fresh DB, this should only happen if migration failed or unexpected.
-		// fmt.Printf("Create user failed: %v\n", err)
+		fmt.Printf("Create user failed: %v\n", err)
 	}
 	fmt.Printf("setup: Test user 'testuser' created.\n")
 	time.Sleep(2 * time.Second)
@@ -219,11 +220,17 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	// Teardown
-	server.Shutdown()
-	if sqlDB, err := db.DB(); err == nil {
-		sqlDB.Close()
+	if err := server.Shutdown(); err != nil {
+		fmt.Printf("Error shutting down server: %v\n", err)
 	}
-	redisSvc.Close()
+	if sqlDB, err := db.DB(); err == nil {
+		if err := sqlDB.Close(); err != nil {
+			fmt.Printf("Error closing DB: %v\n", err)
+		}
+	}
+	if err := redisSvc.Close(); err != nil {
+		fmt.Printf("Error closing Redis: %v\n", err)
+	}
 
 	os.Exit(code)
 }

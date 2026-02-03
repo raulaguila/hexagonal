@@ -34,3 +34,20 @@ nonExistentRoute: Route does not exist in this API.
 manyRequests: You have completed many requests in a short period of time! Please wait a minute!
 unauthorized: Unauthorized access.
 forbidden: Access denied.
+
+# New error codes
+INTERNAL_ERROR: An internal error occurred, please try again later.
+DATABASE_ERROR: A database error occurred, please try again later.
+EXTERNAL_SERVICE_ERROR: An external service error occurred, please try again later.
+TOKEN_EXPIRED: Your session has expired, please log in again.
+NOT_FOUND: The requested resource was not found.
+ALREADY_EXISTS: This resource already exists.
+CONFLICT: A conflict occurred with the current state.
+RESOURCE_IN_USE: This resource is in use and cannot be deleted.
+INVALID_INPUT: Invalid input provided.
+VALIDATION_FAILED: Validation failed, please check your data.
+ROLE_NOT_FOUND: Role not found.
+PASSWORD_MISMATCH: Passwords do not match.
+roleCreated: Role created successfully.
+roleUpdated: Role updated successfully.
+roleDeleted: Role(s) deleted successfully.

@@ -43,9 +43,7 @@ func (r *roleRepository) applyFilter(ctx context.Context, filter *dto.RoleFilter
 		// but let's stick to what was likely there or implied.
 		// Previous code profileRepository had some specific filters, let's adapt.
 		if !filter.ListRoot {
-			// Assuming ROOT is a specific role we might want to hide, but let's keep it simple for now unless we see explicit logic required.
-			// If filter.ListRoot is false, maybe we exclude ID 1? But IDs are UUIDs now.
-			// We'll skip specific ID exclusion unless we know constraints.
+			query = query.Where("name != ?", "ROOT")
 		}
 
 		query = r.applyOrder(query, filter)

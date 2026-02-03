@@ -18,6 +18,7 @@ func UserToModel(u *entity.User) *model.UserModel {
 		Email:     u.Email,
 		AuthID:    u.AuthID,
 		Auth:      AuthToModel(u.Auth),
+		Roles:     RolesToModels(u.Roles),
 		CreatedAt: u.CreatedAt,
 		UpdatedAt: u.UpdatedAt,
 	}
@@ -83,6 +84,7 @@ func RoleToModel(r *entity.Role) *model.RoleModel {
 		ID:          r.ID,
 		Name:        r.Name,
 		Permissions: r.Permissions,
+		Enabled:     r.Enabled,
 		CreatedAt:   r.CreatedAt,
 		UpdatedAt:   r.UpdatedAt,
 	}
@@ -97,6 +99,7 @@ func RoleToEntity(m *model.RoleModel) *entity.Role {
 		ID:          m.ID,
 		Name:        m.Name,
 		Permissions: m.Permissions,
+		Enabled:     m.Enabled,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 	}
@@ -118,4 +121,13 @@ func RolesToEntities(models []*model.RoleModel) []*entity.Role {
 		roles[i] = RoleToEntity(m)
 	}
 	return roles
+}
+
+// RolesToModels converts a slice of Role entities to Role models
+func RolesToModels(entities []*entity.Role) []*model.RoleModel {
+	models := make([]*model.RoleModel, len(entities))
+	for i, e := range entities {
+		models[i] = RoleToModel(e)
+	}
+	return models
 }

@@ -9,6 +9,7 @@ import (
 type RoleInput struct {
 	Name        *string   `json:"name" validate:"omitempty,min=4,max=100"`
 	Permissions *[]string `json:"permissions"`
+	Enabled     *bool     `json:"enabled"`
 }
 
 // Validate validates the RoleInput

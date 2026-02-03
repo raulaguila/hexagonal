@@ -4,6 +4,7 @@ import (
 	"net/url"
 
 	"github.com/gofiber/fiber/v2"
+
 	"github.com/raulaguila/go-api/internal/adapter/driver/rest/middleware"
 )
 

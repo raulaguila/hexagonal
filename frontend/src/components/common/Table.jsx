@@ -4,10 +4,6 @@ export const Table = ({ children }) => (
     <div style={{
         width: '100%',
         overflowX: 'auto',
-        backgroundColor: 'var(--color-surface)',
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--shadow-sm)',
-        border: '1px solid var(--color-border)'
     }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             {children}
@@ -30,8 +26,8 @@ export const Tbody = ({ children }) => (
     </tbody>
 );
 
-export const Tr = ({ children }) => (
-    <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+export const Tr = ({ children, className = '', ...props }) => (
+    <tr className={`table-row ${className}`} {...props}>
         {children}
     </tr>
 );

@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres"
 	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres/model"
 	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres/repository"
 	"github.com/raulaguila/go-api/internal/core/domain/entity"
 	"github.com/raulaguila/go-api/internal/core/dto"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRoleRepository_Integration(t *testing.T) {
@@ -99,8 +100,10 @@ func TestRoleRepository_Integration(t *testing.T) {
 		// Or just search specific names.
 		r1 := entity.NewRole("FilterA", []string{})
 		r2 := entity.NewRole("FilterB", []string{})
-		repo.Create(ctx, r1)
-		repo.Create(ctx, r2)
+		err = repo.Create(ctx, r1)
+		assert.NoError(t, err)
+		err = repo.Create(ctx, r2)
+		assert.NoError(t, err)
 
 		filter := &dto.RoleFilter{
 			Filter: dto.Filter{

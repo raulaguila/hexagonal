@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // Default to local backend if not specified
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:9999';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:9999';
+const API_URL = `${BASE_URL}/v1`;
 
 const api = axios.create({
   baseURL: API_URL,
@@ -14,9 +15,13 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
+    const language = localStorage.getItem('language') || 'en-US';
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    config.headers['Accept-Language'] = language;
     return config;
   },
   (error) => Promise.reject(error)
@@ -37,16 +42,19 @@ api.interceptors.response.use(
         if (!refreshToken) throw new Error('No refresh token');
 
         // Call refresh endpoint
-        // NOTE: Adjust endpoint path if backend differs (e.g., /auth/refresh)
-        const response = await axios.post(`${API_URL}/auth/refresh`, {
-            refresh_token: refreshToken 
+        // Call refresh endpoint
+        // NOTE: Backend expects PUT /v1/auth with Refresh Token in Authorization header
+        const response = await axios.put(`${API_URL}/auth`, {}, {
+          headers: {
+            Authorization: `Bearer ${refreshToken}`
+          }
         });
 
         const { access_token } = response.data;
-        
+
         // Save new token
         localStorage.setItem('access_token', access_token);
-        
+
         // Retry original request
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return api(originalRequest);

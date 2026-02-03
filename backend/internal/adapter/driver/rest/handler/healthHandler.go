@@ -20,7 +20,7 @@ func NewHealthHandler(router fiber.Router, application *app.Application) {
 	handler := &HealthHandler{
 		app: application,
 	}
-	router.Get("", handler.healthCheck).Name("Root")
+	router.Get("/", handler.healthCheck).Name("Root")
 	router.Get("/health", handler.detailedHealth).Name("Health")
 }
 

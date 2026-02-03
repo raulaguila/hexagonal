@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres"
 	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres/model"
 	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres/repository"
 	"github.com/raulaguila/go-api/internal/core/domain/entity"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAuditRepository_Integration(t *testing.T) {

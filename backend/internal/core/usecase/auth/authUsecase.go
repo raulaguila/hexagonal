@@ -84,7 +84,7 @@ func (uc *authUseCase) Me(ctx context.Context, userID string) (*dto.UserOutput, 
 		return nil, apperror.UserNotFound()
 	}
 
-	return dto.EntityToUserOutput(user), nil
+	return dto.EntityToUserOutput(user, true), nil
 }
 
 // Logout invalidates the provided token
@@ -132,7 +132,7 @@ func (uc *authUseCase) generateAuthOutput(user *entity.User, expiration bool) (*
 	}
 
 	return &dto.AuthOutput{
-		User:         dto.EntityToUserOutput(user),
+		User:         dto.EntityToUserOutput(user, true),
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil

@@ -131,7 +131,9 @@ func (s *DatadogSink) Write(entry *formatter.Entry) error {
 	if err != nil {
 		return fmt.Errorf("datadog: request error: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode >= 300 {
 		return fmt.Errorf("datadog: unexpected status: %d", resp.StatusCode)

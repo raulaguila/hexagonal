@@ -4,7 +4,7 @@ import "github.com/raulaguila/go-api/internal/core/domain/entity"
 
 // EntityToUserOutput converts a User entity to UserOutput DTO.
 // Returns nil if the input user is nil.
-func EntityToUserOutput(user *entity.User) *UserOutput {
+func EntityToUserOutput(user *entity.User, includePermissions bool) *UserOutput {
 	if user == nil {
 		return nil
 	}
@@ -27,7 +27,7 @@ func EntityToUserOutput(user *entity.User) *UserOutput {
 	if len(user.Roles) > 0 {
 		roleOutputs := make([]*RoleOutput, len(user.Roles))
 		for i, r := range user.Roles {
-			roleOutputs[i] = EntityToRoleOutput(r, true) // Always include permissions in user details? Or maybe not?
+			roleOutputs[i] = EntityToRoleOutput(r, includePermissions) // Always include permissions in user details? Or maybe not?
 			// Usually valid to include basic info.
 		}
 		output.Roles = roleOutputs
@@ -45,8 +45,9 @@ func EntityToRoleOutput(role *entity.Role, includePermissions bool) *RoleOutput 
 
 	idStr := role.ID.String()
 	output := &RoleOutput{
-		ID:   &idStr,
-		Name: &role.Name,
+		ID:      &idStr,
+		Name:    &role.Name,
+		Enabled: &role.Enabled,
 	}
 
 	if includePermissions {
@@ -61,7 +62,7 @@ func EntityToRoleOutput(role *entity.Role, includePermissions bool) *RoleOutput 
 func EntitiesToUserOutputs(users []*entity.User) []UserOutput {
 	outputs := make([]UserOutput, len(users))
 	for i, user := range users {
-		if out := EntityToUserOutput(user); out != nil {
+		if out := EntityToUserOutput(user, false); out != nil {
 			outputs[i] = *out
 		}
 	}

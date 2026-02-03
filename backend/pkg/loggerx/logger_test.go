@@ -254,7 +254,7 @@ func TestStdoutSink(t *testing.T) {
 	if err != nil {
 		t.Errorf("Write() returned error: %v", err)
 	}
-	s.Close()
+	_ = s.Close()
 }
 
 func TestNewFromConfig(t *testing.T) {
@@ -272,16 +272,16 @@ func TestNewFromConfig(t *testing.T) {
 		]
 	}`
 	configFile := "test_config.json"
-	if err := os.WriteFile(configFile, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configFile, []byte(configContent), 0o644); err != nil {
 		t.Fatalf("Failed to create config file: %v", err)
 	}
-	defer os.Remove(configFile)
+	defer func() { _ = os.Remove(configFile) }()
 
 	log, err := NewFromConfig(configFile)
 	if err != nil {
 		t.Fatalf("NewFromConfig() returned error: %v", err)
 	}
-	defer log.Close()
+	defer func() { _ = log.Close() }()
 
 	log.Info("test from config")
 }

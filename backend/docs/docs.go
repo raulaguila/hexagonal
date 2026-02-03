@@ -1545,7 +1545,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0.0",
 	Host:             "",
-	BasePath:         "/",
+	BasePath:         "/v1",
 	Schemes:          []string{},
 	Title:            "Go API",
 	Description:      "This API is a user-friendly solution designed to serve as the foundation for more complex APIs.",

@@ -113,7 +113,9 @@ func (s *LokiSink) Write(entry *formatter.Entry) error {
 	if err != nil {
 		return fmt.Errorf("loki: request error: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode >= 300 {
 		return fmt.Errorf("loki: unexpected status: %d", resp.StatusCode)
