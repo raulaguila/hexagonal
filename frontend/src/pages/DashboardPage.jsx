@@ -38,7 +38,8 @@ const DashboardPage = () => {
                 // Check server health and get uptime
                 const healthRes = await api.get('/health').catch(() => ({ status: 500, data: {} }));
                 const isHealthy = healthRes.status === 200;
-                const healthData = healthRes.data?.data || healthRes.data || {};
+                // API returns { code, message, object } - data is in object
+                const healthData = healthRes.data?.object || healthRes.data?.data || healthRes.data || {};
 
                 setStats({
                     users: usersCount,

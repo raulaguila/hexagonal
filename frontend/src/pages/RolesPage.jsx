@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Shield, Pen, Trash2, Search } from 'lucide-react';
 import { useToast } from '../components/feedback/ToastProvider';
 import { useRoles, usePermissions } from '../hooks';
@@ -12,6 +14,7 @@ import { ConfirmDialog, SkeletonTableRow } from '../components/feedback';
 import { Table, Thead, Tbody, Tr, Th, Td } from '../components/common/Table';
 import Pagination from '../components/common/Pagination';
 import { usePreferences } from '../context/PreferencesContext';
+import { roleSchema } from '../utils/schemas';
 
 // Styled search input component
 const SearchInput = ({ value, onChange, onKeyDown, placeholder }) => (
@@ -73,12 +76,27 @@ const RolesPage = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [saving, setSaving] = useState(false);
-    const [formData, setFormData] = useState({
-        name: '',
-        permissions: [],
-        enabled: true
-    });
     const itemsPerPage = 10;
+
+    // React Hook Form
+    const {
+        register,
+        handleSubmit: formSubmit,
+        reset,
+        watch,
+        setValue,
+        formState: { errors },
+    } = useForm({
+        resolver: zodResolver(roleSchema),
+        defaultValues: {
+            name: '',
+            permissions: [],
+            enabled: true
+        },
+    });
+
+    const watchPermissions = watch('permissions', []);
+    const watchEnabled = watch('enabled', true);
 
     // Confirm dialog state
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -138,30 +156,26 @@ const RolesPage = () => {
 
     // Toggle permission
     const togglePermission = (permission) => {
-        setFormData(prev => ({
-            ...prev,
-            permissions: prev.permissions.includes(permission)
-                ? prev.permissions.filter(p => p !== permission)
-                : [...prev.permissions, permission]
-        }));
+        const newPermissions = watchPermissions.includes(permission)
+            ? watchPermissions.filter(p => p !== permission)
+            : [...watchPermissions, permission];
+        setValue('permissions', newPermissions);
     };
 
     // Toggle all permissions for a module
     const toggleModule = (moduleKey) => {
         const modulePermissions = PERMISSION_ACTIONS.map(a => `${moduleKey}:${a.key}`);
-        const allChecked = modulePermissions.every(p => formData.permissions.includes(p));
+        const allChecked = modulePermissions.every(p => watchPermissions.includes(p));
 
-        setFormData(prev => ({
-            ...prev,
-            permissions: allChecked
-                ? prev.permissions.filter(p => !modulePermissions.includes(p))
-                : [...new Set([...prev.permissions, ...modulePermissions])]
-        }));
+        const newPermissions = allChecked
+            ? watchPermissions.filter(p => !modulePermissions.includes(p))
+            : [...new Set([...watchPermissions, ...modulePermissions])];
+        setValue('permissions', newPermissions);
     };
 
     // Open edit modal
     const handleEdit = (role) => {
-        setFormData({
+        reset({
             name: role.name,
             permissions: role.permissions || [],
             enabled: role.enabled !== false
@@ -172,29 +186,28 @@ const RolesPage = () => {
 
     // Open create modal
     const handleCreate = () => {
-        setFormData({ name: '', permissions: [], enabled: true });
+        reset({ name: '', permissions: [], enabled: true });
         setEditingId(null);
         setModalOpen(true);
     };
 
     // Submit form
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const onSubmit = async (data) => {
         setSaving(true);
 
         try {
             const payload = {
-                name: formData.name,
-                permissions: formData.permissions,
-                enabled: formData.enabled
+                name: data.name,
+                permissions: data.permissions,
+                enabled: data.enabled
             };
 
             if (editingId) {
                 await roleService.updateRole(editingId, payload);
-                toast.success('Role updated successfully');
+                toast.success(t('roles.updated') || 'Role updated successfully');
             } else {
                 await roleService.createRole(payload);
-                toast.success('Role created successfully');
+                toast.success(t('roles.created') || 'Role created successfully');
             }
 
             setModalOpen(false);
@@ -440,7 +453,7 @@ const RolesPage = () => {
                 title={editingId ? t('role.modal.edit_title') : t('role.modal.create_title')}
                 size="md"
             >
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={formSubmit(onSubmit)}>
                     <div>
                         <label style={{
                             display: 'block',
@@ -453,15 +466,13 @@ const RolesPage = () => {
                         </label>
                         <input
                             type="text"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            required
+                            {...register('name')}
                             placeholder="e.g. EDITOR"
                             style={{
                                 width: '100%',
                                 padding: '0.625rem 1rem',
                                 backgroundColor: 'var(--color-background)',
-                                border: '1px solid var(--color-border)',
+                                border: errors.name ? '1px solid var(--color-error)' : '1px solid var(--color-border)',
                                 borderRadius: 'var(--radius-md)',
                                 fontSize: '0.875rem',
                                 color: 'var(--color-text-main)',
@@ -469,6 +480,11 @@ const RolesPage = () => {
                                 boxSizing: 'border-box'
                             }}
                         />
+                        {errors.name && (
+                            <span style={{ color: 'var(--color-error)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                                {errors.name.message}
+                            </span>
+                        )}
                     </div>
 
                     {/* Enabled Status */}
@@ -481,12 +497,12 @@ const RolesPage = () => {
                             flexWrap: 'wrap'
                         }}>
                             <div
-                                onClick={() => setFormData({ ...formData, enabled: !formData.enabled })}
+                                onClick={() => setValue('enabled', !watchEnabled)}
                                 style={{
                                     width: '44px',
                                     height: '24px',
                                     borderRadius: '12px',
-                                    backgroundColor: formData.enabled ? 'var(--color-success)' : 'var(--color-border)',
+                                    backgroundColor: watchEnabled ? 'var(--color-success)' : 'var(--color-border)',
                                     position: 'relative',
                                     cursor: 'pointer',
                                     transition: 'background-color 0.2s',
@@ -500,7 +516,7 @@ const RolesPage = () => {
                                     backgroundColor: 'white',
                                     position: 'absolute',
                                     top: '2px',
-                                    left: formData.enabled ? '22px' : '2px',
+                                    left: watchEnabled ? '22px' : '2px',
                                     transition: 'left 0.2s',
                                     boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
                                 }} />
@@ -516,7 +532,7 @@ const RolesPage = () => {
                                 fontSize: '0.75rem',
                                 color: 'var(--color-text-muted)'
                             }}>
-                                {formData.enabled
+                                {watchEnabled
                                     ? (t('role.form.enabled_hint') || 'Users with this role can access the system')
                                     : (t('role.form.disabled_hint') || 'Users with only this role will be denied access')}
                             </span>
@@ -565,7 +581,7 @@ const RolesPage = () => {
                             {/* Rows */}
                             {PERMISSION_MODULES.map(module => {
                                 const modulePerms = PERMISSION_ACTIONS.map(a => `${module.key}:${a.key}`);
-                                const allChecked = modulePerms.every(p => formData.permissions.includes(p));
+                                const allChecked = modulePerms.every(p => watchPermissions.includes(p));
 
                                 return (
                                     <div
@@ -602,7 +618,7 @@ const RolesPage = () => {
                                                 <div key={perm} style={{ textAlign: 'center' }}>
                                                     <input
                                                         type="checkbox"
-                                                        checked={formData.permissions.includes(perm)}
+                                                        checked={watchPermissions.includes(perm)}
                                                         onChange={() => togglePermission(perm)}
                                                         style={{
                                                             accentColor: 'var(--color-primary)',

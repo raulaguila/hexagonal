@@ -3,25 +3,30 @@ package handler
 import (
 	"github.com/gofiber/contrib/fiberi18n/v2"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/raulaguila/go-api/internal/adapter/driver/rest/middleware"
 	"github.com/raulaguila/go-api/internal/adapter/driver/rest/presenter"
+	"github.com/raulaguila/go-api/internal/core/domain/entity"
 	"github.com/raulaguila/go-api/internal/core/dto"
 	"github.com/raulaguila/go-api/internal/core/port/input"
+	"github.com/raulaguila/go-api/internal/core/service/auditor"
 	"github.com/raulaguila/go-api/pkg/pgerror"
 )
 
 // UserHandler handles user endpoints
 type UserHandler struct {
 	useCase     input.UserUseCase
+	auditor     auditor.Auditor
 	handleError func(*fiber.Ctx, error) error
 }
 
 // NewUserHandler creates a new UserHandler and registers routes
-func NewUserHandler(router fiber.Router, useCase input.UserUseCase, accessAuth fiber.Handler) {
+func NewUserHandler(router fiber.Router, useCase input.UserUseCase, aud auditor.Auditor, accessAuth fiber.Handler) {
 	handler := &UserHandler{
 		useCase: useCase,
+		auditor: aud,
 		handleError: middleware.NewErrorHandler(middleware.ErrorMapping{
 			fiber.MethodDelete: {
 				pgerror.ErrForeignKeyViolated: {fiber.StatusBadRequest, "userUsed"},
@@ -131,6 +136,34 @@ func (h *UserHandler) createUser(c *fiber.Ctx) error {
 		return h.handleError(c, err)
 	}
 
+	// Audit log
+	if h.auditor != nil {
+		actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
+		var actorID *uuid.UUID
+		if actor != nil {
+			actorID = &actor.ID
+		}
+		resID := ""
+		if user.ID != nil {
+			resID = *user.ID
+		}
+		// Build metadata with DTO data (mask sensitive fields)
+		metadata := map[string]any{
+			"ip":         c.IP(),
+			"user_agent": c.Get("User-Agent"),
+		}
+		if userDTO != nil {
+			metadata["input"] = map[string]any{
+				"name":     userDTO.Name,
+				"username": userDTO.Username,
+				"email":    userDTO.Email,
+				"status":   userDTO.Status,
+				"role_ids": userDTO.RoleIDs,
+			}
+		}
+		h.auditor.Log(c.Context(), actorID, "create", "user", resID, metadata)
+	}
+
 	return presenter.Created(c, fiberi18n.MustLocalize(c, "userCreated"), user)
 }
 
@@ -159,6 +192,34 @@ func (h *UserHandler) updateUser(c *fiber.Ctx) error {
 		return h.handleError(c, err)
 	}
 
+	// Audit log
+	if h.auditor != nil {
+		actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
+		var actorID *uuid.UUID
+		if actor != nil {
+			actorID = &actor.ID
+		}
+		resID := ""
+		if user.ID != nil {
+			resID = *user.ID
+		}
+		// Build metadata with DTO data (mask sensitive fields)
+		metadata := map[string]any{
+			"ip":         c.IP(),
+			"user_agent": c.Get("User-Agent"),
+		}
+		if userDTO != nil {
+			metadata["input"] = map[string]any{
+				"name":     userDTO.Name,
+				"username": userDTO.Username,
+				"email":    userDTO.Email,
+				"status":   userDTO.Status,
+				"role_ids": userDTO.RoleIDs,
+			}
+		}
+		h.auditor.Log(c.Context(), actorID, "update", "user", resID, metadata)
+	}
+
 	return presenter.New(c, fiber.StatusOK, fiberi18n.MustLocalize(c, "userUpdated"), user)
 }
 
@@ -180,6 +241,21 @@ func (h *UserHandler) deleteUser(c *fiber.Ctx) error {
 
 	if err := h.useCase.DeleteUsers(c.Context(), toDelete.IDs); err != nil {
 		return h.handleError(c, err)
+	}
+
+	// Audit log
+	if h.auditor != nil {
+		actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
+		var actorID *uuid.UUID
+		if actor != nil {
+			actorID = &actor.ID
+		}
+		for _, deletedID := range toDelete.IDs {
+			h.auditor.Log(c.Context(), actorID, "delete", "user", deletedID, map[string]interface{}{
+				"ip":         c.IP(),
+				"user_agent": c.Get("User-Agent"),
+			})
+		}
 	}
 
 	return presenter.New(c, fiber.StatusOK, fiberi18n.MustLocalize(c, "userDeleted"), nil)

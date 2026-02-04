@@ -23,14 +23,30 @@ func EntityToUserOutput(user *entity.User, includePermissions bool) *UserOutput 
 		output.Status = &user.Auth.Status
 	}
 
-	// Map Roles
+	// Map Roles and aggregate permissions
 	if len(user.Roles) > 0 {
 		roleOutputs := make([]*RoleOutput, len(user.Roles))
+		permSet := make(map[string]bool)
+
 		for i, r := range user.Roles {
-			roleOutputs[i] = EntityToRoleOutput(r, includePermissions) // Always include permissions in user details? Or maybe not?
-			// Usually valid to include basic info.
+			roleOutputs[i] = EntityToRoleOutput(r, includePermissions)
+			// Aggregate permissions from all roles
+			if includePermissions && r != nil {
+				for _, perm := range r.Permissions {
+					permSet[perm] = true
+				}
+			}
 		}
 		output.Roles = roleOutputs
+
+		// Convert permission set to slice
+		if includePermissions && len(permSet) > 0 {
+			perms := make([]string, 0, len(permSet))
+			for perm := range permSet {
+				perms = append(perms, perm)
+			}
+			output.Permissions = perms
+		}
 	}
 
 	return output

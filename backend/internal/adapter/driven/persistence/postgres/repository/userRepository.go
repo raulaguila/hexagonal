@@ -139,7 +139,7 @@ func (r *userRepository) FindByUsername(ctx context.Context, username string) (*
 // FindByEmail returns a user by its email
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*entity.User, error) {
 	var m model.UserModel
-	if err := r.db.WithContext(ctx).Preload("Auth").Preload("Roles").Where("mail = ?", email).First(&m).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Auth").Preload("Roles").Where("email = ?", email).First(&m).Error; err != nil {
 		return nil, err
 	}
 	return mapper.UserToEntity(&m), nil
@@ -210,7 +210,7 @@ func (r *userRepository) Update(ctx context.Context, user *entity.User) error {
 		if err := tx.Model(m).Updates(map[string]any{
 			"name":     m.Name,
 			"username": m.Username,
-			"mail":     m.Email,
+			"email":    m.Email,
 			"auth_id":  m.AuthID,
 		}).Error; err != nil {
 			return err

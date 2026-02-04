@@ -10,6 +10,7 @@ import (
 	"github.com/raulaguila/go-api/internal/adapter/driven/storage/redis"
 	"github.com/raulaguila/go-api/internal/app"
 	"github.com/raulaguila/go-api/internal/core/port/output"
+	"github.com/raulaguila/go-api/internal/core/service/auditor"
 	"github.com/raulaguila/go-api/internal/core/usecase/auth"
 	"github.com/raulaguila/go-api/internal/core/usecase/role"
 	"github.com/raulaguila/go-api/internal/core/usecase/user"
@@ -40,7 +41,7 @@ func NewContainer(cfg *config.Environment, log *loggerx.Logger, db *gorm.DB, red
 
 	c.initRepositories()
 
-	log.Info("Dependency container initialized", slog.Int("repositories", 2), slog.Int("use_cases", 3))
+	log.Info("Dependency container initialized", slog.Int("repositories", 3), slog.Int("use_cases", 3))
 
 	return c
 }
@@ -49,6 +50,7 @@ func NewContainer(cfg *config.Environment, log *loggerx.Logger, db *gorm.DB, red
 func (c *Container) initRepositories() {
 	roleRepo := repository.NewRoleRepository(c.DB)
 	userRepo := repository.NewUserRepository(c.DB)
+	auditRepo := repository.NewAuditRepository(c.DB)
 
 	// Apply caching decorator and initialize token repo if Redis is available
 	var tokenRepo output.TokenRepository
@@ -62,11 +64,15 @@ func (c *Container) initRepositories() {
 		User:  userRepo,
 		Role:  roleRepo,
 		Token: tokenRepo,
+		Audit: auditRepo,
 	}
 }
 
 // Application returns a fully configured Application instance
 func (c *Container) Application() *app.Application {
+	// Create auditor service
+	aud := auditor.NewAuditor(c.repositories.Audit, c.Log)
+
 	return app.New(
 		c.Config,
 		c.Log,
@@ -77,7 +83,8 @@ func (c *Container) Application() *app.Application {
 			RefreshExpiration: c.Config.RefreshExpiration,
 		}),
 		role.NewRoleUseCase(c.repositories.Role),
-		user.NewUserUseCase(c.repositories.User, c.repositories.Role), // Updated: UserUseCase needs RoleRepo
+		user.NewUserUseCase(c.repositories.User, c.repositories.Role),
 		c.repositories,
+		app.WithAuditor(aud),
 	)
 }

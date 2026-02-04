@@ -31,7 +31,7 @@ func NewAuditor(repo output.AuditRepository, logger *loggerx.Logger) Auditor {
 }
 
 // Log records an action asynchronously
-func (s *auditor) Log(ctx context.Context, actorID *uuid.UUID, action, resType, resID string, metadata map[string]interface{}) {
+func (s *auditor) Log(ctx context.Context, actorID *uuid.UUID, action, resType, resID string, metadata map[string]any) {
 	// Copy context values if needed, or use Background for async
 	// In strict Hexagonal, we might want to use a specific context
 	go func() {
@@ -48,7 +48,7 @@ func (s *auditor) Log(ctx context.Context, actorID *uuid.UUID, action, resType, 
 		ua, _ := metadata["user_agent"].(string)
 
 		// Remove technical metadata fields from the JSON payload we store
-		cleanMeta := make(map[string]interface{})
+		cleanMeta := make(map[string]any)
 		for k, v := range metadata {
 			if k != "ip" && k != "user_agent" {
 				cleanMeta[k] = v

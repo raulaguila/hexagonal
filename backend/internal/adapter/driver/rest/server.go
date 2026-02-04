@@ -215,8 +215,8 @@ func (s *Server) setupRoutes() {
 	})
 
 	handler.NewAuthHandler(v1.Group("/auth", authLimiter), s.appCtx.Auth, accessAuth, refreshAuth)
-	handler.NewRoleHandler(v1.Group("/role"), s.appCtx.Role, accessAuth)
-	handler.NewUserHandler(v1.Group("/user"), s.appCtx.User, accessAuth)
+	handler.NewRoleHandler(v1.Group("/role"), s.appCtx.Role, s.appCtx.Auditor, accessAuth)
+	handler.NewUserHandler(v1.Group("/user"), s.appCtx.User, s.appCtx.Auditor, accessAuth)
 
 	// 404 handler
 	s.app.All("*", func(c *fiber.Ctx) error {

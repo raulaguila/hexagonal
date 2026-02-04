@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Search, Pen, Trash2, User, Mail } from 'lucide-react';
 import { useToast } from '../components/feedback/ToastProvider';
 import { useUsers, useRoles, usePermissions } from '../hooks';
@@ -12,6 +14,7 @@ import { ConfirmDialog, SkeletonTableRow } from '../components/feedback';
 import { Table, Thead, Tbody, Tr, Th, Td } from '../components/common/Table';
 import Pagination from '../components/common/Pagination';
 import { usePreferences } from '../context/PreferencesContext';
+import { userSchema } from '../utils/schemas';
 
 // Styled search input component
 const SearchInput = ({ value, onChange, onKeyDown, placeholder }) => (
@@ -60,13 +63,28 @@ const UsersPage = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [saving, setSaving] = useState(false);
-    const [formData, setFormData] = useState({
-        name: '',
-        username: '',
-        mail: '',
-        role_ids: [],
-        status: true
+
+    // React Hook Form
+    const {
+        register,
+        handleSubmit: formSubmit,
+        reset,
+        watch,
+        setValue,
+        formState: { errors },
+    } = useForm({
+        resolver: zodResolver(userSchema),
+        defaultValues: {
+            name: '',
+            username: '',
+            email: '',
+            role_ids: [],
+            status: true
+        },
     });
+
+    const watchRoleIds = watch('role_ids', []);
+    const watchStatus = watch('status', true);
 
     // Confirm dialog state
     const [confirmOpen, setConfirmOpen] = useState(false);
@@ -117,10 +135,10 @@ const UsersPage = () => {
 
     // Open edit modal
     const handleEdit = (user) => {
-        setFormData({
+        reset({
             name: user.name,
             username: user.username,
-            mail: user.email,
+            email: user.email,
             role_ids: user.roles ? user.roles.map(r => r.id) : [],
             status: user.status !== undefined ? user.status : true
         });
@@ -130,10 +148,10 @@ const UsersPage = () => {
 
     // Open create modal
     const handleCreate = () => {
-        setFormData({
+        reset({
             name: '',
             username: '',
-            mail: '',
+            email: '',
             role_ids: [],
             status: true
         });
@@ -142,17 +160,16 @@ const UsersPage = () => {
     };
 
     // Submit form
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const onSubmit = async (data) => {
         setSaving(true);
 
         try {
             const payload = {
-                name: formData.name,
-                username: formData.username,
-                email: formData.mail,
-                role_ids: formData.role_ids,
-                status: formData.status
+                name: data.name,
+                username: data.username,
+                email: data.email,
+                role_ids: data.role_ids,
+                status: data.status
             };
 
             if (editingId) {
@@ -444,7 +461,7 @@ const UsersPage = () => {
                 title={editingId ? t('user.modal.edit_title') : t('user.modal.create_title')}
                 size="md"
             >
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={formSubmit(onSubmit)}>
                     <div style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -462,15 +479,13 @@ const UsersPage = () => {
                             </label>
                             <input
                                 type="text"
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                required
+                                {...register('name')}
                                 placeholder="e.g. John Doe"
                                 style={{
                                     width: '100%',
                                     padding: '0.625rem 1rem',
                                     backgroundColor: 'var(--color-background)',
-                                    border: '1px solid var(--color-border)',
+                                    border: errors.name ? '1px solid var(--color-error)' : '1px solid var(--color-border)',
                                     borderRadius: 'var(--radius-md)',
                                     fontSize: '0.875rem',
                                     color: 'var(--color-text-main)',
@@ -478,6 +493,11 @@ const UsersPage = () => {
                                     boxSizing: 'border-box'
                                 }}
                             />
+                            {errors.name && (
+                                <span style={{ color: 'var(--color-error)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                                    {errors.name.message}
+                                </span>
+                            )}
                         </div>
                         <div>
                             <label style={{
@@ -491,15 +511,13 @@ const UsersPage = () => {
                             </label>
                             <input
                                 type="text"
-                                value={formData.username}
-                                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                                required
+                                {...register('username')}
                                 placeholder="e.g. jdoe"
                                 style={{
                                     width: '100%',
                                     padding: '0.625rem 1rem',
                                     backgroundColor: 'var(--color-background)',
-                                    border: '1px solid var(--color-border)',
+                                    border: errors.username ? '1px solid var(--color-error)' : '1px solid var(--color-border)',
                                     borderRadius: 'var(--radius-md)',
                                     fontSize: '0.875rem',
                                     color: 'var(--color-text-main)',
@@ -507,6 +525,11 @@ const UsersPage = () => {
                                     boxSizing: 'border-box'
                                 }}
                             />
+                            {errors.username && (
+                                <span style={{ color: 'var(--color-error)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                                    {errors.username.message}
+                                </span>
+                            )}
                         </div>
                         <div>
                             <label style={{
@@ -520,15 +543,13 @@ const UsersPage = () => {
                             </label>
                             <input
                                 type="email"
-                                value={formData.mail}
-                                onChange={(e) => setFormData({ ...formData, mail: e.target.value })}
-                                required
+                                {...register('email')}
                                 placeholder="john@example.com"
                                 style={{
                                     width: '100%',
                                     padding: '0.625rem 1rem',
                                     backgroundColor: 'var(--color-background)',
-                                    border: '1px solid var(--color-border)',
+                                    border: errors.email ? '1px solid var(--color-error)' : '1px solid var(--color-border)',
                                     borderRadius: 'var(--radius-md)',
                                     fontSize: '0.875rem',
                                     color: 'var(--color-text-main)',
@@ -536,6 +557,11 @@ const UsersPage = () => {
                                     boxSizing: 'border-box'
                                 }}
                             />
+                            {errors.email && (
+                                <span style={{ color: 'var(--color-error)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                                    {errors.email.message}
+                                </span>
+                            )}
                         </div>
                     </div>
 
@@ -564,10 +590,10 @@ const UsersPage = () => {
                                         gap: '0.5rem',
                                         padding: '0.5rem 0.75rem',
                                         borderRadius: 'var(--radius-md)',
-                                        border: formData.role_ids.includes(role.id)
+                                        border: watchRoleIds.includes(role.id)
                                             ? '1px solid var(--color-primary)'
                                             : '1px solid var(--color-border)',
-                                        backgroundColor: formData.role_ids.includes(role.id)
+                                        backgroundColor: watchRoleIds.includes(role.id)
                                             ? 'var(--color-primary-light)'
                                             : 'var(--color-surface)',
                                         cursor: 'pointer',
@@ -576,19 +602,19 @@ const UsersPage = () => {
                                 >
                                     <input
                                         type="checkbox"
-                                        checked={formData.role_ids.includes(role.id)}
+                                        checked={watchRoleIds.includes(role.id)}
                                         onChange={() => {
-                                            const newRoles = formData.role_ids.includes(role.id)
-                                                ? formData.role_ids.filter(id => id !== role.id)
-                                                : [...formData.role_ids, role.id];
-                                            setFormData({ ...formData, role_ids: newRoles });
+                                            const newRoles = watchRoleIds.includes(role.id)
+                                                ? watchRoleIds.filter(id => id !== role.id)
+                                                : [...watchRoleIds, role.id];
+                                            setValue('role_ids', newRoles);
                                         }}
                                         style={{ accentColor: 'var(--color-primary)' }}
                                     />
                                     <span style={{
                                         fontSize: '0.875rem',
-                                        fontWeight: formData.role_ids.includes(role.id) ? 600 : 400,
-                                        color: formData.role_ids.includes(role.id)
+                                        fontWeight: watchRoleIds.includes(role.id) ? 600 : 400,
+                                        color: watchRoleIds.includes(role.id)
                                             ? 'var(--color-primary)'
                                             : 'var(--color-text-main)',
                                         overflow: 'hidden',
@@ -612,8 +638,8 @@ const UsersPage = () => {
                         }}>
                             <input
                                 type="checkbox"
-                                checked={formData.status}
-                                onChange={(e) => setFormData({ ...formData, status: e.target.checked })}
+                                checked={watchStatus}
+                                onChange={(e) => setValue('status', e.target.checked)}
                                 style={{
                                     width: '18px',
                                     height: '18px',

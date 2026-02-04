@@ -4,9 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../context/AuthContext';
 import { usePreferences } from '../context/PreferencesContext';
 import { useNavigate } from 'react-router-dom';
-import Button from '../components/common/Button';
-import Input from '../components/common/Input';
-import { Hexagon, Lock, User, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { Hexagon, Lock, User, Sparkles, Eye, EyeOff, Moon, Sun } from 'lucide-react';
 import { loginSchema } from '../utils/schemas';
 
 const LoginPage = () => {
@@ -14,8 +12,10 @@ const LoginPage = () => {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
-    const { t } = usePreferences();
+    const { t, theme, toggleTheme } = usePreferences();
     const navigate = useNavigate();
+
+    const isDark = theme === 'dark';
 
     const {
         register,
@@ -44,48 +44,65 @@ const LoginPage = () => {
         }
     };
 
+    // Theme-aware colors - clean solid design for both modes
+    const colors = {
+        background: isDark ? '#0f172a' : '#f1f5f9',
+        cardBg: isDark ? '#1e293b' : '#ffffff',
+        cardBorder: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+        cardShadow: isDark
+            ? '0 10px 40px rgba(0, 0, 0, 0.4)'
+            : '0 10px 40px rgba(0, 0, 0, 0.08)',
+        title: isDark ? '#ffffff' : '#0f172a',
+        subtitle: isDark ? '#94a3b8' : '#64748b',
+        label: isDark ? '#94a3b8' : '#475569',
+        inputBg: isDark ? '#0f172a' : '#f8fafc',
+        inputBorder: isDark ? '#334155' : '#e2e8f0',
+        inputText: isDark ? '#ffffff' : '#0f172a',
+        inputIcon: isDark ? '#64748b' : '#94a3b8',
+        footerText: '#64748b',
+    };
+
     return (
         <div style={{
             minHeight: '100vh',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
-            position: 'relative',
-            overflow: 'hidden'
+            background: colors.background,
+            transition: 'background 0.3s ease'
         }}>
-            {/* Background Effects */}
-            <div style={{
-                position: 'absolute',
-                top: '-50%',
-                left: '-50%',
-                width: '200%',
-                height: '200%',
-                background: 'radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%)',
-                animation: 'pulse 15s ease-in-out infinite'
-            }} />
-
-            {/* Floating Particles */}
-            <div style={{
-                position: 'absolute',
-                top: '20%',
-                left: '10%',
-                width: '300px',
-                height: '300px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, transparent 70%)',
-                filter: 'blur(60px)'
-            }} />
-            <div style={{
-                position: 'absolute',
-                bottom: '10%',
-                right: '15%',
-                width: '400px',
-                height: '400px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, transparent 70%)',
-                filter: 'blur(80px)'
-            }} />
+            {/* Theme Toggle Button */}
+            <button
+                onClick={toggleTheme}
+                style={{
+                    position: 'absolute',
+                    top: '1.5rem',
+                    right: '1.5rem',
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                    color: isDark ? '#fff' : '#64748b',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s ease',
+                    zIndex: 10
+                }}
+                onMouseOver={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.05)';
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)';
+                }}
+                onMouseOut={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+                }}
+                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+                {isDark ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
 
             {/* Login Card */}
             <div style={{
@@ -93,26 +110,15 @@ const LoginPage = () => {
                 width: '100%',
                 maxWidth: '420px',
                 margin: '1rem',
-                backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                backgroundColor: colors.cardBg,
                 backdropFilter: 'blur(20px)',
                 borderRadius: '24px',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(99, 102, 241, 0.2)',
+                boxShadow: colors.cardShadow,
+                border: `1px solid ${colors.cardBorder}`,
                 padding: '2.5rem',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                transition: 'all 0.3s ease'
             }}>
-                {/* Glow Effect */}
-                <div style={{
-                    position: 'absolute',
-                    top: '-2px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: '40%',
-                    height: '4px',
-                    background: 'linear-gradient(90deg, transparent, var(--color-primary), transparent)',
-                    borderRadius: '2px'
-                }} />
-
                 {/* Logo */}
                 <div style={{
                     display: 'flex',
@@ -137,18 +143,20 @@ const LoginPage = () => {
                         fontSize: '1.5rem',
                         fontWeight: 700,
                         margin: 0,
-                        color: '#fff',
-                        letterSpacing: '-0.02em'
+                        color: colors.title,
+                        letterSpacing: '-0.02em',
+                        transition: 'color 0.3s ease'
                     }}>
                         {t('login.title') || 'HexAdmin'}
                     </h1>
                     <p style={{
                         fontSize: '0.875rem',
-                        color: 'rgba(148, 163, 184, 1)',
+                        color: colors.subtitle,
                         marginTop: '0.5rem',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.5rem'
+                        gap: '0.5rem',
+                        transition: 'color 0.3s ease'
                     }}>
                         <Sparkles size={14} />
                         {t('login.subtitle') || 'Administrative Portal'}
@@ -181,8 +189,9 @@ const LoginPage = () => {
                             display: 'block',
                             fontSize: '0.875rem',
                             fontWeight: 500,
-                            color: 'rgba(148, 163, 184, 1)',
-                            marginBottom: '0.5rem'
+                            color: colors.label,
+                            marginBottom: '0.5rem',
+                            transition: 'color 0.3s ease'
                         }}>
                             {t('login.username') || 'Username'}
                         </label>
@@ -192,7 +201,8 @@ const LoginPage = () => {
                                 left: '1rem',
                                 top: '50%',
                                 transform: 'translateY(-50%)',
-                                color: 'rgba(100, 116, 139, 1)'
+                                color: colors.inputIcon,
+                                transition: 'color 0.3s ease'
                             }} />
                             <input
                                 type="text"
@@ -201,11 +211,11 @@ const LoginPage = () => {
                                 style={{
                                     width: '100%',
                                     padding: '0.875rem 1rem 0.875rem 2.75rem',
-                                    backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                                    border: errors.login ? '1px solid #ef4444' : '1px solid rgba(71, 85, 105, 0.5)',
+                                    backgroundColor: colors.inputBg,
+                                    border: errors.login ? '1px solid #ef4444' : `1px solid ${colors.inputBorder}`,
                                     borderRadius: '12px',
                                     fontSize: '0.9375rem',
-                                    color: '#fff',
+                                    color: colors.inputText,
                                     outline: 'none',
                                     transition: 'all 0.2s',
                                     boxSizing: 'border-box'
@@ -218,7 +228,7 @@ const LoginPage = () => {
                                 }}
                                 onBlur={(e) => {
                                     if (!errors.login) {
-                                        e.target.style.borderColor = 'rgba(71, 85, 105, 0.5)';
+                                        e.target.style.borderColor = colors.inputBorder;
                                         e.target.style.boxShadow = 'none';
                                     }
                                 }}
@@ -236,8 +246,9 @@ const LoginPage = () => {
                             display: 'block',
                             fontSize: '0.875rem',
                             fontWeight: 500,
-                            color: 'rgba(148, 163, 184, 1)',
-                            marginBottom: '0.5rem'
+                            color: colors.label,
+                            marginBottom: '0.5rem',
+                            transition: 'color 0.3s ease'
                         }}>
                             {t('login.password') || 'Password'}
                         </label>
@@ -247,7 +258,8 @@ const LoginPage = () => {
                                 left: '1rem',
                                 top: '50%',
                                 transform: 'translateY(-50%)',
-                                color: 'rgba(100, 116, 139, 1)'
+                                color: colors.inputIcon,
+                                transition: 'color 0.3s ease'
                             }} />
                             <input
                                 type={showPassword ? 'text' : 'password'}
@@ -256,11 +268,11 @@ const LoginPage = () => {
                                 style={{
                                     width: '100%',
                                     padding: '0.875rem 3rem 0.875rem 2.75rem',
-                                    backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                                    border: errors.password ? '1px solid #ef4444' : '1px solid rgba(71, 85, 105, 0.5)',
+                                    backgroundColor: colors.inputBg,
+                                    border: errors.password ? '1px solid #ef4444' : `1px solid ${colors.inputBorder}`,
                                     borderRadius: '12px',
                                     fontSize: '0.9375rem',
-                                    color: '#fff',
+                                    color: colors.inputText,
                                     outline: 'none',
                                     transition: 'all 0.2s',
                                     boxSizing: 'border-box'
@@ -273,7 +285,7 @@ const LoginPage = () => {
                                 }}
                                 onBlur={(e) => {
                                     if (!errors.password) {
-                                        e.target.style.borderColor = 'rgba(71, 85, 105, 0.5)';
+                                        e.target.style.borderColor = colors.inputBorder;
                                         e.target.style.boxShadow = 'none';
                                     }
                                 }}
@@ -290,14 +302,14 @@ const LoginPage = () => {
                                     border: 'none',
                                     padding: '0.25rem',
                                     cursor: 'pointer',
-                                    color: 'rgba(100, 116, 139, 1)',
+                                    color: colors.inputIcon,
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     transition: 'color 0.2s'
                                 }}
                                 onMouseOver={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
-                                onMouseOut={(e) => e.currentTarget.style.color = 'rgba(100, 116, 139, 1)'}
+                                onMouseOut={(e) => e.currentTarget.style.color = colors.inputIcon}
                             >
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
@@ -360,7 +372,8 @@ const LoginPage = () => {
                     marginTop: '2rem',
                     textAlign: 'center',
                     fontSize: '0.8125rem',
-                    color: 'rgba(100, 116, 139, 1)'
+                    color: colors.footerText,
+                    transition: 'color 0.3s ease'
                 }}>
                     {t('login.no_account') || "Don't have an account?"}{' '}
                     <span style={{

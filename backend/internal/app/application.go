@@ -5,6 +5,7 @@ import (
 	"github.com/raulaguila/go-api/internal/adapter/driven/storage/redis"
 	"github.com/raulaguila/go-api/internal/core/port/input"
 	"github.com/raulaguila/go-api/internal/core/port/output"
+	"github.com/raulaguila/go-api/internal/core/service/auditor"
 	"github.com/raulaguila/go-api/pkg/loggerx"
 )
 
@@ -27,6 +28,9 @@ type Application struct {
 
 	// Redis service for cache operations and health checks
 	Redis *redis.Service
+
+	// Auditor for audit logging
+	Auditor auditor.Auditor
 }
 
 // Repositories holds all repository implementations
@@ -34,6 +38,7 @@ type Repositories struct {
 	User  output.UserRepository
 	Role  output.RoleRepository
 	Token output.TokenRepository
+	Audit output.AuditRepository
 }
 
 // Options holds optional dependencies for the application
@@ -56,6 +61,13 @@ func WithLogger(log *loggerx.Logger) Option {
 func WithRedis(redis *redis.Service) Option {
 	return func(a *Application) {
 		a.Redis = redis
+	}
+}
+
+// WithAuditor sets the auditor service
+func WithAuditor(aud auditor.Auditor) Option {
+	return func(a *Application) {
+		a.Auditor = aud
 	}
 }
 

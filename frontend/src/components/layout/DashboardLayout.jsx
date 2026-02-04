@@ -81,7 +81,7 @@ const SidebarSubmenu = ({ icon: Icon, label, children, isCollapsed }) => {
                     flexDirection: 'column',
                     alignItems: isCollapsed ? 'center' : 'stretch'
                 }}>
-                    {React.Children.map(children, child =>
+                    {React.Children.toArray(children).filter(Boolean).map(child =>
                         React.cloneElement(child, { isCollapsed })
                     )}
                 </div>
@@ -96,6 +96,37 @@ const DashboardLayout = () => {
     const navigate = useNavigate();
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+    // Helper to get all user permissions (from top-level or aggregated from roles)
+    const getUserPermissions = () => {
+        // If top-level permissions exists, use it
+        if (user?.permissions && user.permissions.length > 0) {
+            return user.permissions;
+        }
+        // Otherwise aggregate from roles
+        if (user?.roles && user.roles.length > 0) {
+            const perms = new Set();
+            user.roles.forEach(role => {
+                if (role.permissions) {
+                    role.permissions.forEach(p => perms.add(p));
+                }
+            });
+            return Array.from(perms);
+        }
+        return [];
+    };
+
+    // Helper to check if user has any permission for a resource
+    const hasAnyPermission = (resource) => {
+        const permissions = getUserPermissions();
+        if (permissions.length === 0) return true; // If no permissions defined, allow access (admin)
+        const resourcePerms = [`${resource}:view`, `${resource}:create`, `${resource}:edit`, `${resource}:delete`];
+        return resourcePerms.some(p => permissions.includes(p));
+    };
+
+    const canViewUsers = hasAnyPermission('users');
+    const canViewRoles = hasAnyPermission('roles');
+    const hasConfigsAccess = canViewUsers || canViewRoles;
 
     const handleLogout = async () => {
         await logout();
@@ -178,21 +209,23 @@ const DashboardLayout = () => {
                 <nav style={{ flex: 1, overflowY: 'auto', scrollbarWidth: 'none' }}>
                     <SidebarLink to="/dashboard" icon={LayoutDashboard} isCollapsed={isCollapsed}>{t('sidebar.dashboard')}</SidebarLink>
 
-                    <div style={{ marginTop: '1.5rem' }}>
-                        {!isCollapsed && (
-                            <div style={{
-                                fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase',
-                                color: 'var(--color-text-muted)', marginBottom: '0.75rem', paddingLeft: '1rem',
-                                letterSpacing: '0.05em'
-                            }}>
-                                {t('sidebar.dashboard') === 'Dashboard' ? 'Settings' : 'Configurações'}
-                            </div>
-                        )}
-                        <SidebarSubmenu icon={SettingsIcon} label={t('sidebar.dashboard') === 'Dashboard' ? 'Configs' : 'Sistema'} isCollapsed={isCollapsed}>
-                            <SidebarLink to="/users" icon={Users} isCollapsed={isCollapsed}>{t('sidebar.users')}</SidebarLink>
-                            <SidebarLink to="/roles" icon={Shield} isCollapsed={isCollapsed}>{t('sidebar.roles')}</SidebarLink>
-                        </SidebarSubmenu>
-                    </div>
+                    {hasConfigsAccess && (
+                        <div style={{ marginTop: '1.5rem' }}>
+                            {!isCollapsed && (
+                                <div style={{
+                                    fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase',
+                                    color: 'var(--color-text-muted)', marginBottom: '0.75rem', paddingLeft: '1rem',
+                                    letterSpacing: '0.05em'
+                                }}>
+                                    {t('sidebar.dashboard') === 'Dashboard' ? 'Settings' : 'Configurações'}
+                                </div>
+                            )}
+                            <SidebarSubmenu icon={SettingsIcon} label={t('sidebar.dashboard') === 'Dashboard' ? 'Configs' : 'Sistema'} isCollapsed={isCollapsed}>
+                                {canViewUsers && <SidebarLink to="/users" icon={Users} isCollapsed={isCollapsed}>{t('sidebar.users')}</SidebarLink>}
+                                {canViewRoles && <SidebarLink to="/roles" icon={Shield} isCollapsed={isCollapsed}>{t('sidebar.roles')}</SidebarLink>}
+                            </SidebarSubmenu>
+                        </div>
+                    )}
                 </nav>
 
                 {/* Footer Controls (Theme/Lang/User) */}
@@ -205,11 +238,16 @@ const DashboardLayout = () => {
                 }}>
 
                     {/* Preferences Toggles */}
-                    <div style={{ display: 'flex', padding: isCollapsed ? '0 0.25rem' : '0 1rem', gap: '0.5rem' }}>
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: isCollapsed ? 'column' : 'row',
+                        padding: isCollapsed ? '0 0.5rem' : '0 1rem',
+                        gap: '0.5rem'
+                    }}>
                         <button
                             onClick={toggleTheme}
                             style={{
-                                flex: 1,
+                                flex: isCollapsed ? 'unset' : 1,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -228,7 +266,7 @@ const DashboardLayout = () => {
                         <button
                             onClick={toggleLanguage}
                             style={{
-                                flex: 1,
+                                flex: isCollapsed ? 'unset' : 1,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',

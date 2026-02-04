@@ -93,7 +93,27 @@ WHERE
     u.username = 'admin'
 ON CONFLICT DO NOTHING;
 
--- 5. VIEWS
+-- 5. AUDIT LOGS
+CREATE TABLE IF NOT EXISTS sys_audit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    actor_id UUID REFERENCES usr_user(id) ON DELETE SET NULL,
+    action TEXT NOT NULL,
+    resource_entity TEXT NOT NULL,
+    resource_id TEXT NOT NULL,
+    metadata JSONB,
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_sys_audit_logs_actor_id ON sys_audit_logs(actor_id);
+CREATE INDEX IF NOT EXISTS idx_sys_audit_logs_action ON sys_audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_sys_audit_logs_resource_entity ON sys_audit_logs(resource_entity);
+CREATE INDEX IF NOT EXISTS idx_sys_audit_logs_resource_id ON sys_audit_logs(resource_id);
+CREATE INDEX IF NOT EXISTS idx_sys_audit_logs_created_at ON sys_audit_logs(created_at);
+
+-- VIEWS
+-- Create view for simplified user details
 CREATE OR REPLACE VIEW public.vw_usr_details AS
 SELECT
     u.id AS user_id,
@@ -112,6 +132,7 @@ GROUP BY
     u.id,
     a.id;
 
+-- Create view for simplified user authentication claims
 CREATE OR REPLACE VIEW public.vw_usr_auth_claims AS
 SELECT
     u.id AS user_id,
@@ -143,3 +164,55 @@ FROM
 GROUP BY
     u.id,
     a.id;
+
+-- Create view for simplified audit log viewing with user information
+CREATE OR REPLACE VIEW vw_audit_logs AS
+SELECT
+    al.id,
+    al.created_at AS "timestamp",
+    al.action,
+    al.resource_entity AS resource_type,
+    al.resource_id,
+    al.actor_id,
+    u.name AS actor_name,
+    u.username AS actor_username,
+    al.ip_address,
+    al.user_agent,
+    al.metadata
+FROM sys_audit_logs al
+LEFT JOIN usr_user u ON al.actor_id = u.id
+ORDER BY al.created_at DESC;
+
+-- Create a more detailed view with readable metadata
+CREATE OR REPLACE VIEW vw_audit_logs_detailed AS
+SELECT
+    al.id,
+    TO_CHAR(al.created_at AT TIME ZONE 'America/Manaus', 'DD/MM/YYYY HH24:MI:SS') AS "timestamp_br",
+    al.created_at AS timestamp_utc,
+    CASE al.action
+        WHEN 'create' THEN 'Criação'
+        WHEN 'update' THEN 'Atualização'
+        WHEN 'delete' THEN 'Exclusão'
+        ELSE al.action
+    END AS action_label,
+    al.action,
+    CASE al.resource_entity
+        WHEN 'user' THEN 'Usuário'
+        WHEN 'role' THEN 'Perfil'
+        ELSE al.resource_entity
+    END AS resource_type_label,
+    al.resource_entity AS resource_type,
+    al.resource_id,
+    al.actor_id,
+    COALESCE(u.name, 'Sistema') AS actor_name,
+    COALESCE(u.username, 'system') AS actor_username,
+    al.ip_address,
+    al.user_agent,
+    al.metadata,
+    al.metadata->>'input' AS input_data
+FROM sys_audit_logs al
+LEFT JOIN usr_user u ON al.actor_id = u.id
+ORDER BY al.created_at DESC;
+
+COMMENT ON VIEW vw_audit_logs IS 'Simplified view of audit logs with actor information';
+COMMENT ON VIEW vw_audit_logs_detailed IS 'Detailed view of audit logs with localized labels and formatted timestamps';

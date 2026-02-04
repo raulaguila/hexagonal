@@ -3,32 +3,30 @@ package handler
 import (
 	"github.com/gofiber/contrib/fiberi18n/v2"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/raulaguila/go-api/internal/adapter/driver/rest/middleware"
 	"github.com/raulaguila/go-api/internal/adapter/driver/rest/presenter"
+	"github.com/raulaguila/go-api/internal/core/domain/entity"
 	"github.com/raulaguila/go-api/internal/core/dto"
 	"github.com/raulaguila/go-api/internal/core/port/input"
+	"github.com/raulaguila/go-api/internal/core/service/auditor"
 	"github.com/raulaguila/go-api/pkg/pgerror"
-)
-
-const (
-	localDTO    = "localDTO"
-	localFilter = "localFilter"
-	localID     = "localID"
-	paramID     = "id"
 )
 
 // RoleHandler handles role endpoints
 type RoleHandler struct {
 	useCase     input.RoleUseCase
+	auditor     auditor.Auditor
 	handleError func(*fiber.Ctx, error) error
 }
 
 // NewRoleHandler creates a new RoleHandler and registers routes
-func NewRoleHandler(router fiber.Router, useCase input.RoleUseCase, accessAuth fiber.Handler) {
+func NewRoleHandler(router fiber.Router, useCase input.RoleUseCase, aud auditor.Auditor, accessAuth fiber.Handler) {
 	handler := &RoleHandler{
 		useCase: useCase,
+		auditor: aud,
 		handleError: middleware.NewErrorHandler(middleware.ErrorMapping{
 			fiber.MethodDelete: {
 				pgerror.ErrForeignKeyViolated: {fiber.StatusBadRequest, "roleUsed"},
@@ -43,20 +41,20 @@ func NewRoleHandler(router fiber.Router, useCase input.RoleUseCase, accessAuth f
 
 	// Middleware for parsing DTOs
 	roleFilterDTO := middleware.ParseDTO(middleware.DTOConfig{
-		ContextKey: localFilter,
+		ContextKey: middleware.CtxKeyFilter,
 		OnLookup:   middleware.Query,
 		Model:      &dto.RoleFilter{},
 	})
 
 	roleInputDTO := middleware.ParseDTO(middleware.DTOConfig{
-		ContextKey: localDTO,
+		ContextKey: middleware.CtxKeyDTO,
 		OnLookup:   middleware.Body,
 		Model:      &dto.RoleInput{},
 	})
 
 	// ID is now a UUID string, handled as string by generic parser or specific struct
 	idParamDTO := middleware.ParseDTO(middleware.DTOConfig{
-		ContextKey: localID,
+		ContextKey: middleware.CtxKeyID,
 		OnLookup:   middleware.Params,
 		Model: &struct {
 			ID string `params:"id" validate:"uuid"`
@@ -67,7 +65,7 @@ func NewRoleHandler(router fiber.Router, useCase input.RoleUseCase, accessAuth f
 	})
 
 	idsBodyDTO := middleware.ParseDTO(middleware.DTOConfig{
-		ContextKey: localID,
+		ContextKey: middleware.CtxKeyID,
 		OnLookup:   middleware.Body,
 		Model:      &dto.IDsInput{},
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
@@ -80,7 +78,7 @@ func NewRoleHandler(router fiber.Router, useCase input.RoleUseCase, accessAuth f
 	router.Get("", roleFilterDTO, middleware.RequirePermission("roles:view"), handler.getRoles)
 	router.Get("/list", roleFilterDTO, middleware.RequirePermission("roles:view"), handler.listRoles)
 	router.Post("", roleInputDTO, middleware.RequirePermission("roles:create"), handler.createRole)
-	router.Put("/:"+paramID, idParamDTO, roleInputDTO, middleware.RequirePermission("roles:edit"), handler.updateRole)
+	router.Put("/:id", idParamDTO, roleInputDTO, middleware.RequirePermission("roles:edit"), handler.updateRole)
 	router.Delete("", idsBodyDTO, middleware.RequirePermission("roles:delete"), handler.deleteRoles)
 }
 
@@ -98,7 +96,7 @@ func NewRoleHandler(router fiber.Router, useCase input.RoleUseCase, accessAuth f
 // @Router       /role [get]
 // @Security	 Bearer
 func (h *RoleHandler) getRoles(c *fiber.Ctx) error {
-	filter := c.Locals(localFilter).(*dto.RoleFilter)
+	filter := GetLocal[dto.RoleFilter](c, middleware.CtxKeyFilter)
 	// Permission logic for listing root moved or kept?
 	// Assuming similar logic implies 'ListRoot'
 	// h.canListRoot(c) check needs User entity in context
@@ -128,7 +126,7 @@ func (h *RoleHandler) getRoles(c *fiber.Ctx) error {
 // @Router       /role/list [get]
 // @Security	 Bearer
 func (h *RoleHandler) listRoles(c *fiber.Ctx) error {
-	filter := c.Locals(localFilter).(*dto.RoleFilter)
+	filter := GetLocal[dto.RoleFilter](c, middleware.CtxKeyFilter)
 	if canList, ok := h.checkListRoot(c); ok {
 		filter.ListRoot = canList
 	}
@@ -155,11 +153,37 @@ func (h *RoleHandler) listRoles(c *fiber.Ctx) error {
 // @Router       /role [post]
 // @Security	 Bearer
 func (h *RoleHandler) createRole(c *fiber.Ctx) error {
-	roleDTO := c.Locals(localDTO).(*dto.RoleInput)
+	roleDTO := GetLocal[dto.RoleInput](c, middleware.CtxKeyDTO)
 
 	role, err := h.useCase.CreateRole(c.Context(), roleDTO)
 	if err != nil {
 		return h.handleError(c, err)
+	}
+
+	// Audit log
+	if h.auditor != nil {
+		actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
+		var actorID *uuid.UUID
+		if actor != nil {
+			actorID = &actor.ID
+		}
+		resID := ""
+		if role.ID != nil {
+			resID = *role.ID
+		}
+		// Build metadata with DTO data
+		metadata := map[string]any{
+			"ip":         c.IP(),
+			"user_agent": c.Get("User-Agent"),
+		}
+		if roleDTO != nil {
+			metadata["input"] = map[string]any{
+				"name":        roleDTO.Name,
+				"enabled":     roleDTO.Enabled,
+				"permissions": roleDTO.Permissions,
+			}
+		}
+		h.auditor.Log(c.Context(), actorID, "create", "role", resID, metadata)
 	}
 
 	return presenter.Created(c, fiberi18n.MustLocalize(c, "roleCreated"), role)
@@ -180,14 +204,40 @@ func (h *RoleHandler) createRole(c *fiber.Ctx) error {
 // @Router       /role/{id} [put]
 // @Security	 Bearer
 func (h *RoleHandler) updateRole(c *fiber.Ctx) error {
-	idStruct := c.Locals(localID).(*struct {
+	idStruct := GetLocal[struct {
 		ID string `params:"id" validate:"uuid"`
-	})
-	roleDTO := c.Locals(localDTO).(*dto.RoleInput)
+	}](c, middleware.CtxKeyID)
+	roleDTO := GetLocal[dto.RoleInput](c, middleware.CtxKeyDTO)
 
 	role, err := h.useCase.UpdateRole(c.Context(), idStruct.ID, roleDTO)
 	if err != nil {
 		return h.handleError(c, err)
+	}
+
+	// Audit log
+	if h.auditor != nil {
+		actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
+		var actorID *uuid.UUID
+		if actor != nil {
+			actorID = &actor.ID
+		}
+		resID := ""
+		if role.ID != nil {
+			resID = *role.ID
+		}
+		// Build metadata with DTO data
+		metadata := map[string]any{
+			"ip":         c.IP(),
+			"user_agent": c.Get("User-Agent"),
+		}
+		if roleDTO != nil {
+			metadata["input"] = map[string]any{
+				"name":        roleDTO.Name,
+				"enabled":     roleDTO.Enabled,
+				"permissions": roleDTO.Permissions,
+			}
+		}
+		h.auditor.Log(c.Context(), actorID, "update", "role", resID, metadata)
 	}
 
 	return presenter.New(c, fiber.StatusOK, fiberi18n.MustLocalize(c, "roleUpdated"), role)
@@ -207,10 +257,25 @@ func (h *RoleHandler) updateRole(c *fiber.Ctx) error {
 // @Router       /role [delete]
 // @Security	 Bearer
 func (h *RoleHandler) deleteRoles(c *fiber.Ctx) error {
-	toDelete := c.Locals(localID).(*dto.IDsInput)
+	toDelete := GetLocal[dto.IDsInput](c, middleware.CtxKeyID)
 
 	if err := h.useCase.DeleteRoles(c.Context(), toDelete.IDs); err != nil {
 		return h.handleError(c, err)
+	}
+
+	// Audit log
+	if h.auditor != nil {
+		actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
+		var actorID *uuid.UUID
+		if actor != nil {
+			actorID = &actor.ID
+		}
+		for _, deletedID := range toDelete.IDs {
+			h.auditor.Log(c.Context(), actorID, "delete", "role", deletedID, map[string]interface{}{
+				"ip":         c.IP(),
+				"user_agent": c.Get("User-Agent"),
+			})
+		}
 	}
 
 	return presenter.New(c, fiber.StatusOK, fiberi18n.MustLocalize(c, "roleDeleted"), nil)
