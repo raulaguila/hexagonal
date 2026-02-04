@@ -14,7 +14,7 @@ type UserModel struct {
 	UpdatedAt time.Time    `gorm:"autoUpdateTime"`
 	Name      string       `gorm:"column:name;type:citext;not null;"`
 	Username  string       `gorm:"column:username;type:citext;not null;"`
-	Email     string       `gorm:"column:mail;type:citext;not null;"`
+	Email     string       `gorm:"column:email;type:citext;not null;"`
 	AuthID    uuid.UUID    `gorm:"column:auth_id;type:uuid;not null;"`
 	Auth      *AuthModel   `gorm:"constraint:OnDelete:CASCADE"`
 	Roles     []*RoleModel `gorm:"many2many:usr_user_role;joinForeignKey:user_id;joinReferences:role_id"`

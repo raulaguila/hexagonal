@@ -203,7 +203,7 @@ func (s *Server) setupRoutes() {
 	handler.NewHealthHandler(v1.Group(""), s.appCtx)
 
 	authLimiter := limiter.New(limiter.Config{
-		Max:        5, // Auth routes: 5 req/min
+		Max:        50, // Auth routes: 5 req/min
 		Expiration: 1 * time.Minute,
 		Storage:    &RedisStorage{s.redis},
 		KeyGenerator: func(c *fiber.Ctx) string {

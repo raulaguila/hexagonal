@@ -7,6 +7,45 @@ export default {
     'sidebar.logout': 'Logout',
     'sidebar.theme': 'Theme',
     'sidebar.language': 'Language',
+    'sidebar.settings': 'Settings',
+    'sidebar.configs': 'Configs',
+
+    // Login Page
+    'login.title': 'HexAdmin',
+    'login.subtitle': 'Administrative Portal',
+    'login.username': 'Username',
+    'login.username_placeholder': 'Enter your username',
+    'login.password': 'Password',
+    'login.submit': 'Sign In',
+    'login.sign_in': 'Sign In',
+    'login.signing_in': 'Signing in...',
+    'login.error': 'Invalid username or password',
+    'login.no_account': "Don't have an account?",
+    'login.contact_admin': 'Contact Admin',
+
+    // Dashboard Page
+    'dashboard.title': 'Dashboard',
+    'dashboard.subtitle': 'System overview and real-time metrics',
+    'dashboard.total_users': 'Total Users',
+    'dashboard.active_roles': 'Active Roles',
+    'dashboard.server_status': 'Server Status',
+    'dashboard.system_health': 'System Health',
+    'dashboard.quick_stats': 'Quick Stats',
+    'dashboard.system_info': 'System Information',
+    'dashboard.registered_users': 'Registered Users',
+    'dashboard.defined_roles': 'Defined Roles',
+    'dashboard.uptime': 'Uptime',
+    'dashboard.application': 'Application',
+    'dashboard.environment': 'Environment',
+    'dashboard.api_endpoint': 'API Endpoint',
+    'dashboard.last_update': 'Last Update',
+    'dashboard.connected': 'Connected',
+    'dashboard.disconnected': 'Disconnected',
+    'dashboard.updated': 'Updated',
+    'dashboard.online': 'Online',
+    'dashboard.offline': 'Offline',
+    'dashboard.healthy': 'Healthy',
+    'dashboard.degraded': 'Degraded',
 
     // Users Page
     'users.title': 'Users',
@@ -21,6 +60,9 @@ export default {
     'users.empty': 'No users found.',
     'users.empty_search': 'No users found matching your search.',
     'users.delete_confirm': 'Are you sure you want to delete this user?',
+    'users.created': 'User created successfully',
+    'users.updated': 'User updated successfully',
+    'users.deleted': 'User deleted successfully',
 
     // User Modal
     'user.modal.create_title': 'Create New User',
@@ -38,6 +80,21 @@ export default {
     // General
     'common.active': 'Active',
     'common.inactive': 'Inactive',
+    'common.enabled': 'Enabled',
+    'common.disabled': 'Disabled',
+    'common.save': 'Save',
+    'common.cancel': 'Cancel',
+    'common.delete': 'Delete',
+    'common.edit': 'Edit',
+    'common.create': 'Create',
+    'common.search': 'Search',
+    'common.loading': 'Loading...',
+    'common.confirm': 'Confirm',
+
+    // Confirmation Dialogs
+    'confirm.logout.title': 'Confirm Logout',
+    'confirm.logout.message': 'Are you sure you want to sign out?',
+    'confirm.logout.confirm': 'Sign Out',
 
     // Pagination
     'pagination.showing': 'Showing',
@@ -59,6 +116,9 @@ export default {
     'roles.empty': 'No roles found.',
     'roles.empty_search': 'No roles found matching your search.',
     'roles.delete_confirm': 'Are you sure you want to delete this role?',
+    'roles.created': 'Role created successfully',
+    'roles.updated': 'Role updated successfully',
+    'roles.deleted': 'Role deleted successfully',
 
     // Role Modal
     'role.modal.create_title': 'Create New Role',
@@ -69,3 +129,4 @@ export default {
     'role.form.enabled_hint': 'Users with this role can access the system',
     'role.form.disabled_hint': 'Users with only this role will be denied access'
 };
+

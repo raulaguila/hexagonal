@@ -61,7 +61,7 @@ func (r *userRepository) applyFilter(ctx context.Context, filter *dto.UserFilter
 			query = query.Where(
 				"unaccent("+userTable+".name) ILIKE unaccent(?) OR "+
 					"unaccent("+userTable+".username) ILIKE unaccent(?) OR "+
-					"unaccent("+userTable+".mail) ILIKE unaccent(?)",
+					"unaccent("+userTable+".email) ILIKE unaccent(?)",
 				searchPattern, searchPattern, searchPattern,
 			)
 		}

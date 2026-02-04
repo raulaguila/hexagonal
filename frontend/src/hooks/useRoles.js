@@ -9,11 +9,11 @@ export function useRoles() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const fetchRoles = useCallback(async ({ page = 1, limit = 100, search = '' } = {}) => {
+    const fetchRoles = useCallback(async ({ page = 1, limit = 100, search = '', order = '', sort = '' } = {}) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await roleService.getRoles({ page, limit, search });
+            const response = await roleService.getRoles({ page, limit, search, order, sort });
             const items = Array.isArray(response) ? response : response.items || [];
             setRoles(items);
         } catch (err) {

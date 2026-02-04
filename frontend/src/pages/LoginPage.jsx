@@ -1,29 +1,44 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../context/AuthContext';
+import { usePreferences } from '../context/PreferencesContext';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
-import { Hexagon, Lock, User, Sparkles } from 'lucide-react';
+import { Hexagon, Lock, User, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { loginSchema } from '../utils/schemas';
 
 const LoginPage = () => {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
+    const { t } = usePreferences();
     const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm({
+        resolver: zodResolver(loginSchema),
+        defaultValues: {
+            login: '',
+            password: '',
+        },
+    });
+
+    const onSubmit = async (data) => {
         setError('');
         setIsLoading(true);
 
         try {
-            await login(username, password);
+            await login(data.login, data.password);
             navigate('/dashboard');
         } catch (err) {
             console.error(err);
-            setError('Invalid username or password');
+            setError(t('login.error') || 'Invalid username or password');
         } finally {
             setIsLoading(false);
         }
@@ -125,7 +140,7 @@ const LoginPage = () => {
                         color: '#fff',
                         letterSpacing: '-0.02em'
                     }}>
-                        HexAdmin
+                        {t('login.title') || 'HexAdmin'}
                     </h1>
                     <p style={{
                         fontSize: '0.875rem',
@@ -136,7 +151,7 @@ const LoginPage = () => {
                         gap: '0.5rem'
                     }}>
                         <Sparkles size={14} />
-                        Administrative Portal
+                        {t('login.subtitle') || 'Administrative Portal'}
                     </p>
                 </div>
 
@@ -160,7 +175,7 @@ const LoginPage = () => {
                 )}
 
                 {/* Form */}
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit(onSubmit)}>
                     <div style={{ marginBottom: '1.25rem' }}>
                         <label style={{
                             display: 'block',
@@ -169,7 +184,7 @@ const LoginPage = () => {
                             color: 'rgba(148, 163, 184, 1)',
                             marginBottom: '0.5rem'
                         }}>
-                            Username
+                            {t('login.username') || 'Username'}
                         </label>
                         <div style={{ position: 'relative' }}>
                             <User size={18} style={{
@@ -181,15 +196,13 @@ const LoginPage = () => {
                             }} />
                             <input
                                 type="text"
-                                placeholder="Enter your username"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                required
+                                placeholder={t('login.username_placeholder') || 'Enter your username'}
+                                {...register('login')}
                                 style={{
                                     width: '100%',
                                     padding: '0.875rem 1rem 0.875rem 2.75rem',
                                     backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                                    border: '1px solid rgba(71, 85, 105, 0.5)',
+                                    border: errors.login ? '1px solid #ef4444' : '1px solid rgba(71, 85, 105, 0.5)',
                                     borderRadius: '12px',
                                     fontSize: '0.9375rem',
                                     color: '#fff',
@@ -198,15 +211,24 @@ const LoginPage = () => {
                                     boxSizing: 'border-box'
                                 }}
                                 onFocus={(e) => {
-                                    e.target.style.borderColor = 'var(--color-primary)';
-                                    e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.15)';
+                                    if (!errors.login) {
+                                        e.target.style.borderColor = 'var(--color-primary)';
+                                        e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.15)';
+                                    }
                                 }}
                                 onBlur={(e) => {
-                                    e.target.style.borderColor = 'rgba(71, 85, 105, 0.5)';
-                                    e.target.style.boxShadow = 'none';
+                                    if (!errors.login) {
+                                        e.target.style.borderColor = 'rgba(71, 85, 105, 0.5)';
+                                        e.target.style.boxShadow = 'none';
+                                    }
                                 }}
                             />
                         </div>
+                        {errors.login && (
+                            <span style={{ color: '#f87171', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                                {errors.login.message}
+                            </span>
+                        )}
                     </div>
 
                     <div style={{ marginBottom: '1.5rem' }}>
@@ -217,7 +239,7 @@ const LoginPage = () => {
                             color: 'rgba(148, 163, 184, 1)',
                             marginBottom: '0.5rem'
                         }}>
-                            Password
+                            {t('login.password') || 'Password'}
                         </label>
                         <div style={{ position: 'relative' }}>
                             <Lock size={18} style={{
@@ -228,16 +250,14 @@ const LoginPage = () => {
                                 color: 'rgba(100, 116, 139, 1)'
                             }} />
                             <input
-                                type="password"
+                                type={showPassword ? 'text' : 'password'}
                                 placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
+                                {...register('password')}
                                 style={{
                                     width: '100%',
-                                    padding: '0.875rem 1rem 0.875rem 2.75rem',
+                                    padding: '0.875rem 3rem 0.875rem 2.75rem',
                                     backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                                    border: '1px solid rgba(71, 85, 105, 0.5)',
+                                    border: errors.password ? '1px solid #ef4444' : '1px solid rgba(71, 85, 105, 0.5)',
                                     borderRadius: '12px',
                                     fontSize: '0.9375rem',
                                     color: '#fff',
@@ -246,15 +266,47 @@ const LoginPage = () => {
                                     boxSizing: 'border-box'
                                 }}
                                 onFocus={(e) => {
-                                    e.target.style.borderColor = 'var(--color-primary)';
-                                    e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.15)';
+                                    if (!errors.password) {
+                                        e.target.style.borderColor = 'var(--color-primary)';
+                                        e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.15)';
+                                    }
                                 }}
                                 onBlur={(e) => {
-                                    e.target.style.borderColor = 'rgba(71, 85, 105, 0.5)';
-                                    e.target.style.boxShadow = 'none';
+                                    if (!errors.password) {
+                                        e.target.style.borderColor = 'rgba(71, 85, 105, 0.5)';
+                                        e.target.style.boxShadow = 'none';
+                                    }
                                 }}
                             />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                style={{
+                                    position: 'absolute',
+                                    right: '1rem',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    background: 'none',
+                                    border: 'none',
+                                    padding: '0.25rem',
+                                    cursor: 'pointer',
+                                    color: 'rgba(100, 116, 139, 1)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'color 0.2s'
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+                                onMouseOut={(e) => e.currentTarget.style.color = 'rgba(100, 116, 139, 1)'}
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
                         </div>
+                        {errors.password && (
+                            <span style={{ color: '#f87171', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                                {errors.password.message}
+                            </span>
+                        )}
                     </div>
 
                     <button
@@ -295,10 +347,10 @@ const LoginPage = () => {
                                     borderRadius: '50%',
                                     animation: 'spin 0.8s linear infinite'
                                 }} />
-                                Signing in...
+                                {t('login.signing_in') || 'Signing in...'}
                             </>
                         ) : (
-                            'Sign In'
+                            t('login.sign_in') || 'Sign In'
                         )}
                     </button>
                 </form>
@@ -310,13 +362,13 @@ const LoginPage = () => {
                     fontSize: '0.8125rem',
                     color: 'rgba(100, 116, 139, 1)'
                 }}>
-                    Don't have an account?{' '}
+                    {t('login.no_account') || "Don't have an account?"}{' '}
                     <span style={{
                         color: 'var(--color-primary)',
                         cursor: 'pointer',
                         fontWeight: 500
                     }}>
-                        Contact Admin
+                        {t('login.contact_admin') || 'Contact Admin'}
                     </span>
                 </div>
             </div>

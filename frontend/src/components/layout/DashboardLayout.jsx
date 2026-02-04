@@ -3,6 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usePreferences } from '../../context/PreferencesContext';
 import { LayoutDashboard, Users, Shield, LogOut, Settings as SettingsIcon, ChevronLeft, ChevronRight, Moon, Sun, Globe } from 'lucide-react';
+import { ConfirmDialog } from '../../components/feedback';
 
 const SidebarLink = ({ to, icon: Icon, children, isCollapsed }) => {
     return (
@@ -94,6 +95,7 @@ const DashboardLayout = () => {
     const { theme, toggleTheme, language, setLanguage, t } = usePreferences();
     const navigate = useNavigate();
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
     const handleLogout = async () => {
         await logout();
@@ -272,7 +274,7 @@ const DashboardLayout = () => {
                         )}
                         {!isCollapsed && (
                             <button
-                                onClick={handleLogout}
+                                onClick={() => setShowLogoutConfirm(true)}
                                 style={{
                                     background: 'transparent',
                                     color: 'var(--color-text-muted)',
@@ -300,6 +302,17 @@ const DashboardLayout = () => {
             }}>
                 <Outlet />
             </main>
+
+            {/* Logout Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showLogoutConfirm}
+                onClose={() => setShowLogoutConfirm(false)}
+                onConfirm={handleLogout}
+                title={language === 'pt-BR' ? 'Confirmar Saída' : 'Confirm Logout'}
+                message={language === 'pt-BR' ? 'Tem certeza que deseja sair do sistema?' : 'Are you sure you want to sign out?'}
+                confirmText={language === 'pt-BR' ? 'Sair' : 'Sign Out'}
+                variant="danger"
+            />
         </div>
     );
 };

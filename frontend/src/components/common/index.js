@@ -7,3 +7,5 @@ export { Table, Thead, Tbody, Tr, Th, Td } from './Table';
 export { default as Badge } from './Badge';
 export { Card, StatCard } from './Card';
 export { default as EmptyState } from './EmptyState';
+export { default as Breadcrumbs } from './Breadcrumbs';
+

@@ -15,11 +15,11 @@ export function useUsers() {
         totalPages: 0
     });
 
-    const fetchUsers = useCallback(async ({ page = 1, limit = 10, search = '' } = {}) => {
+    const fetchUsers = useCallback(async ({ page = 1, limit = 10, search = '', order = '', sort = '' } = {}) => {
         setLoading(true);
         setError(null);
         try {
-            const response = await userService.getUsers({ page, limit, search });
+            const response = await userService.getUsers({ page, limit, search, order, sort });
             const items = Array.isArray(response) ? response : response.items || [];
             const paginationData = response.pagination || {};
 

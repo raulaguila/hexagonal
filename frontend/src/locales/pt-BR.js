@@ -7,6 +7,45 @@ export default {
     'sidebar.logout': 'Sair',
     'sidebar.theme': 'Tema',
     'sidebar.language': 'Idioma',
+    'sidebar.settings': 'Configurações',
+    'sidebar.configs': 'Sistema',
+
+    // Login Page
+    'login.title': 'HexAdmin',
+    'login.subtitle': 'Portal Administrativo',
+    'login.username': 'Usuário',
+    'login.username_placeholder': 'Digite seu usuário',
+    'login.password': 'Senha',
+    'login.submit': 'Entrar',
+    'login.sign_in': 'Entrar',
+    'login.signing_in': 'Entrando...',
+    'login.error': 'Usuário ou senha inválidos',
+    'login.no_account': 'Não tem uma conta?',
+    'login.contact_admin': 'Contate o Admin',
+
+    // Dashboard Page
+    'dashboard.title': 'Dashboard',
+    'dashboard.subtitle': 'Visão geral do sistema e métricas em tempo real',
+    'dashboard.total_users': 'Total de Usuários',
+    'dashboard.active_roles': 'Perfis Ativos',
+    'dashboard.server_status': 'Status do Servidor',
+    'dashboard.system_health': 'Saúde do Sistema',
+    'dashboard.quick_stats': 'Estatísticas Rápidas',
+    'dashboard.system_info': 'Informações do Sistema',
+    'dashboard.registered_users': 'Usuários Registrados',
+    'dashboard.defined_roles': 'Perfis Definidos',
+    'dashboard.uptime': 'Tempo Ativo',
+    'dashboard.application': 'Aplicação',
+    'dashboard.environment': 'Ambiente',
+    'dashboard.api_endpoint': 'Endpoint da API',
+    'dashboard.last_update': 'Última Atualização',
+    'dashboard.connected': 'Conectado',
+    'dashboard.disconnected': 'Desconectado',
+    'dashboard.updated': 'Atualizado',
+    'dashboard.online': 'Online',
+    'dashboard.offline': 'Offline',
+    'dashboard.healthy': 'Saudável',
+    'dashboard.degraded': 'Degradado',
 
     // Users Page
     'users.title': 'Usuários',
@@ -21,6 +60,9 @@ export default {
     'users.empty': 'Nenhum usuário encontrado.',
     'users.empty_search': 'Nenhum usuário encontrado para sua busca.',
     'users.delete_confirm': 'Tem certeza que deseja excluir este usuário?',
+    'users.created': 'Usuário criado com sucesso',
+    'users.updated': 'Usuário atualizado com sucesso',
+    'users.deleted': 'Usuário excluído com sucesso',
 
     // User Modal
     'user.modal.create_title': 'Criar Novo Usuário',
@@ -38,6 +80,21 @@ export default {
     // General
     'common.active': 'Ativo',
     'common.inactive': 'Inativo',
+    'common.enabled': 'Habilitado',
+    'common.disabled': 'Desabilitado',
+    'common.save': 'Salvar',
+    'common.cancel': 'Cancelar',
+    'common.delete': 'Excluir',
+    'common.edit': 'Editar',
+    'common.create': 'Criar',
+    'common.search': 'Buscar',
+    'common.loading': 'Carregando...',
+    'common.confirm': 'Confirmar',
+
+    // Confirmation Dialogs
+    'confirm.logout.title': 'Confirmar Saída',
+    'confirm.logout.message': 'Tem certeza que deseja sair do sistema?',
+    'confirm.logout.confirm': 'Sair',
 
     // Pagination
     'pagination.showing': 'Mostrando',
@@ -59,6 +116,9 @@ export default {
     'roles.empty': 'Nenhum perfil encontrado.',
     'roles.empty_search': 'Nenhum perfil encontrado para sua busca.',
     'roles.delete_confirm': 'Tem certeza que deseja excluir este perfil?',
+    'roles.created': 'Perfil criado com sucesso',
+    'roles.updated': 'Perfil atualizado com sucesso',
+    'roles.deleted': 'Perfil excluído com sucesso',
 
     // Role Modal
     'role.modal.create_title': 'Criar Novo Perfil',
@@ -69,3 +129,4 @@ export default {
     'role.form.enabled_hint': 'Usuários com este perfil podem acessar o sistema',
     'role.form.disabled_hint': 'Usuários com apenas este perfil terão acesso negado'
 };
+

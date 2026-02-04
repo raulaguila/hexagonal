@@ -88,3 +88,8 @@ func (s *Service) Del(ctx context.Context, keys ...string) error {
 	}
 	return s.client.Del(ctx, keys...).Err()
 }
+
+// Ping checks if Redis is reachable
+func (s *Service) Ping(ctx context.Context) error {
+	return s.client.Ping(ctx).Err()
+}

@@ -7,6 +7,7 @@ import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import Badge from '../components/common/Badge';
 import EmptyState from '../components/common/EmptyState';
+import Breadcrumbs from '../components/common/Breadcrumbs';
 import { ConfirmDialog, SkeletonTableRow } from '../components/feedback';
 import { Table, Thead, Tbody, Tr, Th, Td } from '../components/common/Table';
 import Pagination from '../components/common/Pagination';
@@ -29,7 +30,8 @@ const SearchInput = ({ value, onChange, onKeyDown, placeholder }) => (
             fontSize: '0.875rem',
             color: 'var(--color-text-main)',
             outline: 'none',
-            transition: 'border-color 0.2s, box-shadow 0.2s'
+            transition: 'border-color 0.2s, box-shadow 0.2s',
+            minWidth: '0'
         }}
         onFocus={(e) => {
             e.target.style.borderColor = 'var(--color-primary)';
@@ -53,6 +55,8 @@ const UsersPage = () => {
 
     // Local state
     const [search, setSearch] = useState('');
+    const [sortKey, setSortKey] = useState('name');
+    const [sortOrder, setSortOrder] = useState('asc');
     const [modalOpen, setModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [saving, setSaving] = useState(false);
@@ -69,6 +73,17 @@ const UsersPage = () => {
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleting, setDeleting] = useState(false);
 
+    // Note: Backend expects sort=columnName, order=asc|desc
+    const loadUsers = useCallback((params = {}) => {
+        fetchUsers({
+            page: params.page ?? pagination.page ?? 1,
+            limit: pagination.limit || 10,
+            search: params.search ?? search,
+            sort: params.sortKey ?? sortKey,
+            order: params.sortOrder ?? sortOrder
+        });
+    }, [fetchUsers, pagination, search, sortKey, sortOrder]);
+
     // Fetch data on mount
     useEffect(() => {
         fetchUsers({ page: 1, limit: 10, search: '' });
@@ -76,10 +91,10 @@ const UsersPage = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Search handler - only on button click
+    // Search handler - sends to backend
     const handleSearch = useCallback(() => {
-        fetchUsers({ page: 1, limit: pagination.limit || 10, search });
-    }, [fetchUsers, pagination.limit, search]);
+        loadUsers({ page: 1, search: search });
+    }, [search, loadUsers]);
 
     // Handle Enter key in search
     const handleSearchKeyDown = (e) => {
@@ -88,9 +103,16 @@ const UsersPage = () => {
         }
     };
 
+    // Sort handler - sends to backend
+    const handleSort = useCallback((key, order) => {
+        setSortKey(key);
+        setSortOrder(order);
+        loadUsers({ sortKey: key, sortOrder: order });
+    }, [loadUsers]);
+
     // Page change handler
     const handlePageChange = (page) => {
-        fetchUsers({ page, limit: pagination.limit || 10, search });
+        loadUsers({ page });
     };
 
     // Open edit modal
@@ -142,7 +164,7 @@ const UsersPage = () => {
             }
 
             setModalOpen(false);
-            fetchUsers({ page: pagination.page || 1, limit: pagination.limit || 10, search });
+            loadUsers({ page: pagination.page || 1 });
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to save user');
         } finally {
@@ -179,7 +201,7 @@ const UsersPage = () => {
     const canDelete = hasPermission('users:delete') || isRoot();
 
     return (
-        <div>
+        <div className="page-container">
             {/* Header */}
             <div style={{ marginBottom: '1.5rem' }}>
                 <h1 style={{
@@ -200,14 +222,15 @@ const UsersPage = () => {
             </div>
 
             {/* Search and Actions Row */}
-            <div style={{
+            <div className="page-actions" style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 marginBottom: '1rem',
-                gap: '1rem'
+                gap: '1rem',
+                flexWrap: 'wrap'
             }}>
-                <div style={{ display: 'flex', gap: '0.5rem', flex: 1, maxWidth: '400px' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flex: 1, minWidth: '200px', maxWidth: '400px' }}>
                     <SearchInput
                         placeholder={t('users.search_placeholder') || 'Search users...'}
                         value={search}
@@ -222,7 +245,7 @@ const UsersPage = () => {
                 {canCreate && (
                     <Button onClick={handleCreate} variant="primary">
                         <Plus size={18} />
-                        {t('users.add') || 'Add User'}
+                        <span className="btn-text">{t('users.add') || 'Add User'}</span>
                     </Button>
                 )}
             </div>
@@ -237,8 +260,22 @@ const UsersPage = () => {
                 <Table>
                     <Thead>
                         <Tr>
-                            <Th>{t('users.table.user') || 'User'}</Th>
-                            <Th>{t('users.table.contact') || 'Contact'}</Th>
+                            <Th
+                                sortKey="name"
+                                currentSort={sortKey}
+                                sortOrder={sortOrder}
+                                onSort={handleSort}
+                            >
+                                {t('users.table.user') || 'User'}
+                            </Th>
+                            <Th
+                                sortKey="email"
+                                currentSort={sortKey}
+                                sortOrder={sortOrder}
+                                onSort={handleSort}
+                            >
+                                {t('users.table.contact') || 'Contact'}
+                            </Th>
                             <Th>{t('users.table.roles') || 'Roles'}</Th>
                             <Th>{t('users.table.status') || 'Status'}</Th>
                             <Th style={{ textAlign: 'center' }}>{t('users.table.actions') || 'Actions'}</Th>
@@ -251,7 +288,7 @@ const UsersPage = () => {
                             ))
                         ) : users.length === 0 ? (
                             <Tr>
-                                <Td colSpan={5}>
+                                <Td colSpan={5} style={{ padding: 0 }}>
                                     <EmptyState
                                         icon={User}
                                         title={t('users.empty') || 'No users found'}
@@ -278,15 +315,28 @@ const UsersPage = () => {
                                                 justifyContent: 'center',
                                                 fontWeight: 600,
                                                 fontSize: '1rem',
-                                                border: '1px solid var(--color-border)'
+                                                border: '1px solid var(--color-border)',
+                                                flexShrink: 0
                                             }}>
                                                 {user.name?.charAt(0) || '?'}
                                             </div>
-                                            <div>
-                                                <div style={{ fontWeight: 500, color: 'var(--color-text-main)' }}>
+                                            <div style={{ minWidth: 0 }}>
+                                                <div style={{
+                                                    fontWeight: 500,
+                                                    color: 'var(--color-text-main)',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}>
                                                     {user.name}
                                                 </div>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                                                <div style={{
+                                                    fontSize: '0.75rem',
+                                                    color: 'var(--color-text-muted)',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}>
                                                     @{user.username}
                                                 </div>
                                             </div>
@@ -295,9 +345,22 @@ const UsersPage = () => {
 
                                     {/* Contact */}
                                     <Td>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-secondary)' }}>
-                                            <Mail size={14} />
-                                            <span style={{ fontSize: '0.875rem' }}>{user.email}</span>
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem',
+                                            color: 'var(--color-text-secondary)',
+                                            overflow: 'hidden'
+                                        }}>
+                                            <Mail size={14} style={{ flexShrink: 0 }} />
+                                            <span style={{
+                                                fontSize: '0.875rem',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap'
+                                            }}>
+                                                {user.email}
+                                            </span>
                                         </div>
                                     </Td>
 
@@ -382,8 +445,12 @@ const UsersPage = () => {
                 size="md"
             >
                 <form onSubmit={handleSubmit}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div style={{ gridColumn: 'span 2' }}>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                        gap: '1rem'
+                    }}>
+                        <div style={{ gridColumn: '1 / -1' }}>
                             <label style={{
                                 display: 'block',
                                 fontSize: '0.875rem',
@@ -485,7 +552,7 @@ const UsersPage = () => {
                         </label>
                         <div style={{
                             display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
                             gap: '0.5rem'
                         }}>
                             {roles.map(role => (
@@ -523,7 +590,10 @@ const UsersPage = () => {
                                         fontWeight: formData.role_ids.includes(role.id) ? 600 : 400,
                                         color: formData.role_ids.includes(role.id)
                                             ? 'var(--color-primary)'
-                                            : 'var(--color-text-main)'
+                                            : 'var(--color-text-main)',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
                                     }}>
                                         {role.name}
                                     </span>
@@ -563,7 +633,8 @@ const UsersPage = () => {
                         gap: '0.75rem',
                         marginTop: '1.5rem',
                         paddingTop: '1rem',
-                        borderTop: '1px solid var(--color-border)'
+                        borderTop: '1px solid var(--color-border)',
+                        flexWrap: 'wrap'
                     }}>
                         <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
                             {t('user.form.cancel') || 'Cancel'}
@@ -589,6 +660,22 @@ const UsersPage = () => {
                 variant="danger"
                 loading={deleting}
             />
+
+            {/* Responsive styles */}
+            <style>{`
+                @media (max-width: 640px) {
+                    .page-actions {
+                        flex-direction: column;
+                        align-items: stretch;
+                    }
+                    .page-actions > div:first-child {
+                        max-width: none;
+                    }
+                    .btn-text {
+                        display: none;
+                    }
+                }
+            `}</style>
         </div>
     );
 };

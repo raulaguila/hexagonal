@@ -1,5 +1,6 @@
 -- Habilita extensions
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "unaccent";
 CREATE EXTENSION IF NOT EXISTS "citext";
 
 -- 1. ROLE
@@ -51,15 +52,15 @@ CREATE TABLE if not exists public.usr_user (
     updated_at timestamptz DEFAULT NOW() NOT NULL,
     "name" CITEXT NOT NULL,
     username CITEXT NOT NULL,
-    mail CITEXT NOT NULL,
+    email CITEXT NOT NULL,
     auth_id UUID NOT NULL,
     CONSTRAINT fk_usr_user_auth FOREIGN KEY (auth_id) REFERENCES public.usr_auth (id) ON DELETE CASCADE,
-    CONSTRAINT uni_usr_user_mail UNIQUE (mail),
+    CONSTRAINT uni_usr_user_email UNIQUE (email),
     CONSTRAINT uni_usr_user_username UNIQUE (username),
     CONSTRAINT uni_usr_user_auth UNIQUE (auth_id)
 );
 
-INSERT INTO public.usr_user (auth_id, "name", mail, username)
+INSERT INTO public.usr_user (auth_id, "name", email, username)
 SELECT
     id,
     'Administrator',
@@ -98,7 +99,7 @@ SELECT
     u.id AS user_id,
     u.name,
     u.username,
-    u.mail,
+    u.email,
     u.created_at,
     a.status AS is_active,
     array_agg(r.name) AS roles
@@ -115,7 +116,7 @@ CREATE OR REPLACE VIEW public.vw_usr_auth_claims AS
 SELECT
     u.id AS user_id,
     u.username,
-    u.mail,
+    u.email,
     a.id AS auth_id,
     a.password AS password_hash,
     a.token,

@@ -36,7 +36,7 @@ func (r *roleRepository) applyFilter(ctx context.Context, filter *dto.RoleFilter
 		}
 
 		if filter.Search != "" {
-			query = query.Where("unaccent(name) LIKE unaccent(?)", fmt.Sprintf("%%%s%%", filter.Search))
+			query = query.Where("unaccent(name) ILIKE unaccent(?)", fmt.Sprintf("%%%s%%", filter.Search))
 		}
 
 		// List root specifically (or exclude it) - typical pattern might be exclusion if not requested

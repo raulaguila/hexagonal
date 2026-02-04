@@ -7,9 +7,9 @@ export const userService = {
     /**
      * Get paginated list of users
      */
-    async getUsers({ page = 1, limit = 10, search = '' } = {}) {
+    async getUsers({ page = 1, limit = 10, search = '', order = '', sort = '' } = {}) {
         const { data } = await api.get('/user', {
-            params: { page, limit, search }
+            params: { page, limit, search, order, sort }
         });
         return data;
     },

@@ -4,5 +4,6 @@ DROP TABLE IF EXISTS public.usr_user_role;
 DROP TABLE IF EXISTS public.usr_user;
 DROP TABLE IF EXISTS public.usr_auth;
 DROP TABLE IF EXISTS public.usr_role;
+DROP EXTENSION IF EXISTS "unaccent";
 DROP EXTENSION IF EXISTS "citext";
 DROP EXTENSION IF EXISTS "pgcrypto";

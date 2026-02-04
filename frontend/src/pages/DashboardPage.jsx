@@ -12,8 +12,8 @@ const DashboardPage = () => {
         roles: 0,
         serverStatus: 'Unknown',
         systemHealth: 'Unknown',
-        uptime: '0h',
-        requests: 0
+        uptime: 'N/A',
+        version: 'v1.0.0'
     });
     const [loading, setLoading] = useState(true);
     const [lastUpdated, setLastUpdated] = useState(null);
@@ -35,17 +35,18 @@ const DashboardPage = () => {
                     (Array.isArray(rolesData) ? rolesData.length :
                         (rolesData.items?.length || 0));
 
-                // Check server health
+                // Check server health and get uptime
                 const healthRes = await api.get('/health').catch(() => ({ status: 500, data: {} }));
                 const isHealthy = healthRes.status === 200;
+                const healthData = healthRes.data?.data || healthRes.data || {};
 
                 setStats({
                     users: usersCount,
                     roles: rolesCount,
                     serverStatus: isHealthy ? 'Online' : 'Offline',
                     systemHealth: isHealthy ? 'Healthy' : 'Degraded',
-                    uptime: '99.9%',
-                    requests: Math.floor(Math.random() * 1000) + 500
+                    uptime: healthData.uptime || 'N/A',
+                    version: healthData.version || 'v1.0.0'
                 });
                 setLastUpdated(new Date());
             } catch (error) {
@@ -100,14 +101,14 @@ const DashboardPage = () => {
                         gap: '0.75rem'
                     }}>
                         <Zap size={28} style={{ color: 'var(--color-primary)' }} />
-                        {t('sidebar.dashboard') || 'Dashboard'}
+                        {t('dashboard.title') || 'Dashboard'}
                     </h1>
                     <p style={{
                         color: 'var(--color-text-secondary)',
                         marginTop: '0.5rem',
                         fontSize: '0.9375rem'
                     }}>
-                        System overview and real-time metrics
+                        {t('dashboard.subtitle') || 'System overview and real-time metrics'}
                     </p>
                 </div>
 
@@ -124,7 +125,7 @@ const DashboardPage = () => {
                         border: '1px solid var(--color-border)'
                     }}>
                         <Clock size={14} />
-                        Updated {lastUpdated.toLocaleTimeString()}
+                        {t('dashboard.updated') || 'Updated'} {lastUpdated.toLocaleTimeString()}
                     </div>
                 )}
             </div>
@@ -146,26 +147,26 @@ const DashboardPage = () => {
                 ) : (
                     <>
                         <StatCard
-                            title="Total Users"
+                            title={t('dashboard.total_users') || 'Total Users'}
                             value={stats.users}
                             icon={Users}
                             color="var(--color-primary)"
                         />
                         <StatCard
-                            title="Active Roles"
+                            title={t('dashboard.active_roles') || 'Active Roles'}
                             value={stats.roles}
                             icon={Shield}
                             color="#8b5cf6"
                         />
                         <StatCard
-                            title="Server Status"
-                            value={stats.serverStatus}
+                            title={t('dashboard.server_status') || 'Server Status'}
+                            value={stats.serverStatus === 'Online' ? (t('dashboard.online') || 'Online') : (t('dashboard.offline') || 'Offline')}
                             icon={Server}
                             color={getServerColor(stats.serverStatus)}
                         />
                         <StatCard
-                            title="System Health"
-                            value={stats.systemHealth}
+                            title={t('dashboard.system_health') || 'System Health'}
+                            value={stats.systemHealth === 'Healthy' ? (t('dashboard.healthy') || 'Healthy') : (t('dashboard.degraded') || 'Degraded')}
                             icon={Activity}
                             color={getHealthColor(stats.systemHealth)}
                         />
@@ -210,7 +211,7 @@ const DashboardPage = () => {
                             fontWeight: 600,
                             color: 'var(--color-text-main)'
                         }}>
-                            Quick Stats
+                            {t('dashboard.quick_stats') || 'Quick Stats'}
                         </h3>
                     </div>
 
@@ -224,7 +225,7 @@ const DashboardPage = () => {
                             borderRadius: 'var(--radius-md)'
                         }}>
                             <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                                Registered Users
+                                {t('dashboard.registered_users') || 'Registered Users'}
                             </span>
                             <span style={{
                                 fontSize: '1.25rem',
@@ -243,7 +244,7 @@ const DashboardPage = () => {
                             borderRadius: 'var(--radius-md)'
                         }}>
                             <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                                Defined Roles
+                                {t('dashboard.defined_roles') || 'Defined Roles'}
                             </span>
                             <span style={{
                                 fontSize: '1.25rem',
@@ -262,7 +263,7 @@ const DashboardPage = () => {
                             borderRadius: 'var(--radius-md)'
                         }}>
                             <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                                Uptime
+                                {t('dashboard.uptime') || 'Uptime'}
                             </span>
                             <span style={{
                                 fontSize: '1.25rem',
@@ -306,7 +307,7 @@ const DashboardPage = () => {
                             fontWeight: 600,
                             color: 'var(--color-text-main)'
                         }}>
-                            System Information
+                            {t('dashboard.system_info') || 'System Information'}
                         </h3>
                     </div>
 
@@ -318,10 +319,10 @@ const DashboardPage = () => {
                             borderBottom: '1px solid var(--color-border)'
                         }}>
                             <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                                Application
+                                {t('dashboard.application') || 'Application'}
                             </span>
                             <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-main)' }}>
-                                HexAdmin v1.0.0
+                                HexAdmin {stats.version || 'v1.0.0'}
                             </span>
                         </div>
                         <div style={{
@@ -331,7 +332,7 @@ const DashboardPage = () => {
                             borderBottom: '1px solid var(--color-border)'
                         }}>
                             <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                                Environment
+                                {t('dashboard.environment') || 'Environment'}
                             </span>
                             <span style={{
                                 fontSize: '0.75rem',
@@ -351,10 +352,10 @@ const DashboardPage = () => {
                             borderBottom: '1px solid var(--color-border)'
                         }}>
                             <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                                API Endpoint
+                                {t('dashboard.api_endpoint') || 'API Endpoint'}
                             </span>
                             <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-main)' }}>
-                                {stats.serverStatus === 'Online' ? '✓ Connected' : '✗ Disconnected'}
+                                {stats.serverStatus === 'Online' ? `✓ ${t('dashboard.connected') || 'Connected'}` : `✗ ${t('dashboard.disconnected') || 'Disconnected'}`}
                             </span>
                         </div>
                         <div style={{
@@ -363,7 +364,7 @@ const DashboardPage = () => {
                             padding: '0.5rem 0'
                         }}>
                             <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                                Last Update
+                                {t('dashboard.last_update') || 'Last Update'}
                             </span>
                             <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-main)' }}>
                                 {lastUpdated ? lastUpdated.toLocaleDateString() : 'N/A'}

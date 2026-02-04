@@ -75,6 +75,15 @@ func (h *HealthHandler) detailedHealth(c *fiber.Ctx) error {
 		overallStatus = "unhealthy"
 	}
 
+	// Check Redis
+	if h.app.Redis != nil {
+		redisCheck := h.checkRedis()
+		checks["redis"] = redisCheck
+		if redisCheck.Status != "up" {
+			overallStatus = "degraded"
+		}
+	}
+
 	response := HealthStatus{
 		Status:    overallStatus,
 		Timestamp: time.Now(),
@@ -84,7 +93,7 @@ func (h *HealthHandler) detailedHealth(c *fiber.Ctx) error {
 	}
 
 	statusCode := fiber.StatusOK
-	if overallStatus != "healthy" {
+	if overallStatus == "unhealthy" {
 		statusCode = fiber.StatusServiceUnavailable
 	}
 
@@ -102,6 +111,30 @@ func (h *HealthHandler) checkDatabase() CheckResult {
 	// Simple check: try to count users with limit 0
 	_, err := h.app.Repositories.User.Count(ctx, nil)
 
+	duration := time.Since(start)
+
+	if err != nil {
+		return CheckResult{
+			Status:   "down",
+			Duration: duration.String(),
+			Message:  err.Error(),
+		}
+	}
+
+	return CheckResult{
+		Status:   "up",
+		Duration: duration.String(),
+	}
+}
+
+// checkRedis checks the Redis connection
+func (h *HealthHandler) checkRedis() CheckResult {
+	start := time.Now()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	err := h.app.Redis.Ping(ctx)
 	duration := time.Since(start)
 
 	if err != nil {

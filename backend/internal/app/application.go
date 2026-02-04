@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/raulaguila/go-api/config"
+	"github.com/raulaguila/go-api/internal/adapter/driven/storage/redis"
 	"github.com/raulaguila/go-api/internal/core/port/input"
 	"github.com/raulaguila/go-api/internal/core/port/output"
 	"github.com/raulaguila/go-api/pkg/loggerx"
@@ -23,6 +24,9 @@ type Application struct {
 
 	// Repositories (Output Ports) - exposed for adapters that need direct access
 	Repositories *Repositories
+
+	// Redis service for cache operations and health checks
+	Redis *redis.Service
 }
 
 // Repositories holds all repository implementations
@@ -45,6 +49,13 @@ type Option func(*Application)
 func WithLogger(log *loggerx.Logger) Option {
 	return func(a *Application) {
 		a.Log = log
+	}
+}
+
+// WithRedis sets the Redis service for health checks
+func WithRedis(redis *redis.Service) Option {
+	return func(a *Application) {
+		a.Redis = redis
 	}
 }
 

@@ -7,9 +7,9 @@ export const roleService = {
     /**
      * Get paginated list of roles
      */
-    async getRoles({ page = 1, limit = 10, search = '' } = {}) {
+    async getRoles({ page = 1, limit = 10, search = '', order = '', sort = '' } = {}) {
         const { data } = await api.get('/role', {
-            params: { page, limit, search }
+            params: { page, limit, search, order, sort }
         });
         return data;
     },

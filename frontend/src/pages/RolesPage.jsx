@@ -7,6 +7,7 @@ import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import Badge from '../components/common/Badge';
 import EmptyState from '../components/common/EmptyState';
+import Breadcrumbs from '../components/common/Breadcrumbs';
 import { ConfirmDialog, SkeletonTableRow } from '../components/feedback';
 import { Table, Thead, Tbody, Tr, Th, Td } from '../components/common/Table';
 import Pagination from '../components/common/Pagination';
@@ -29,7 +30,8 @@ const SearchInput = ({ value, onChange, onKeyDown, placeholder }) => (
             fontSize: '0.875rem',
             color: 'var(--color-text-main)',
             outline: 'none',
-            transition: 'border-color 0.2s, box-shadow 0.2s'
+            transition: 'border-color 0.2s, box-shadow 0.2s',
+            minWidth: '0'
         }}
         onFocus={(e) => {
             e.target.style.borderColor = 'var(--color-primary)';
@@ -65,8 +67,9 @@ const RolesPage = () => {
 
     // Local state
     const [searchTerm, setSearchTerm] = useState('');
-    const [appliedSearch, setAppliedSearch] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [sortKey, setSortKey] = useState('name');
+    const [sortOrder, setSortOrder] = useState('asc');
     const [modalOpen, setModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [saving, setSaving] = useState(false);
@@ -82,40 +85,55 @@ const RolesPage = () => {
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleting, setDeleting] = useState(false);
 
+    // Fetch data function
+    // Note: Backend expects sort=columnName, order=asc|desc
+    const loadRoles = useCallback((params = {}) => {
+        fetchRoles({
+            page: params.page ?? currentPage,
+            limit: itemsPerPage,
+            search: params.search ?? searchTerm,
+            sort: params.sortKey ?? sortKey,
+            order: params.sortOrder ?? sortOrder
+        });
+    }, [fetchRoles, currentPage, searchTerm, sortKey, sortOrder]);
+
     // Fetch data on mount
     useEffect(() => {
-        fetchRoles();
+        loadRoles({ page: 1, search: '' });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Filter roles based on applied search only
-    const filteredRoles = React.useMemo(() => {
-        if (!appliedSearch.trim()) {
-            return roles;
-        }
-        return roles.filter(role =>
-            role.name.toLowerCase().includes(appliedSearch.toLowerCase())
-        );
-    }, [roles, appliedSearch]);
-
-    // Calculate pagination
-    const totalPages = Math.ceil(filteredRoles.length / itemsPerPage);
-    const paginatedRoles = filteredRoles.slice(
+    // Calculate pagination from data
+    const totalPages = Math.ceil(roles.length / itemsPerPage);
+    const paginatedRoles = roles.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
 
-    // Search handler - only on button click
+    // Search handler - sends to backend
     const handleSearch = useCallback(() => {
-        setAppliedSearch(searchTerm);
         setCurrentPage(1);
-    }, [searchTerm]);
+        loadRoles({ page: 1, search: searchTerm });
+    }, [searchTerm, loadRoles]);
 
     // Handle Enter key in search
     const handleSearchKeyDown = (e) => {
         if (e.key === 'Enter') {
             handleSearch();
         }
+    };
+
+    // Sort handler - sends to backend
+    const handleSort = useCallback((key, order) => {
+        setSortKey(key);
+        setSortOrder(order);
+        loadRoles({ sortKey: key, sortOrder: order });
+    }, [loadRoles]);
+
+    // Page change handler
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        loadRoles({ page });
     };
 
     // Toggle permission
@@ -165,16 +183,22 @@ const RolesPage = () => {
         setSaving(true);
 
         try {
+            const payload = {
+                name: formData.name,
+                permissions: formData.permissions,
+                enabled: formData.enabled
+            };
+
             if (editingId) {
-                await roleService.updateRole(editingId, formData);
+                await roleService.updateRole(editingId, payload);
                 toast.success('Role updated successfully');
             } else {
-                await roleService.createRole(formData);
+                await roleService.createRole(payload);
                 toast.success('Role created successfully');
             }
 
             setModalOpen(false);
-            fetchRoles();
+            loadRoles();
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to save role');
         } finally {
@@ -211,7 +235,7 @@ const RolesPage = () => {
     const canDelete = hasPermission('roles:delete') || isRoot();
 
     return (
-        <div>
+        <div className="page-container">
             {/* Header */}
             <div style={{ marginBottom: '1.5rem' }}>
                 <h1 style={{
@@ -232,14 +256,15 @@ const RolesPage = () => {
             </div>
 
             {/* Search and Actions Row */}
-            <div style={{
+            <div className="page-actions" style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 marginBottom: '1rem',
-                gap: '1rem'
+                gap: '1rem',
+                flexWrap: 'wrap'
             }}>
-                <div style={{ display: 'flex', gap: '0.5rem', flex: 1, maxWidth: '400px' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flex: 1, minWidth: '200px', maxWidth: '400px' }}>
                     <SearchInput
                         placeholder={t('roles.search_placeholder') || 'Search roles...'}
                         value={searchTerm}
@@ -254,7 +279,7 @@ const RolesPage = () => {
                 {canCreate && (
                     <Button onClick={handleCreate} variant="primary">
                         <Plus size={18} />
-                        {t('roles.add') || 'Add Role'}
+                        <span className="btn-text">{t('roles.add') || 'Add Role'}</span>
                     </Button>
                 )}
             </div>
@@ -269,7 +294,14 @@ const RolesPage = () => {
                 <Table>
                     <Thead>
                         <Tr>
-                            <Th>{t('roles.table.name') || 'Role Name'}</Th>
+                            <Th
+                                sortKey="name"
+                                currentSort={sortKey}
+                                sortOrder={sortOrder}
+                                onSort={handleSort}
+                            >
+                                {t('roles.table.name') || 'Role Name'}
+                            </Th>
                             <Th style={{ textAlign: 'center' }}>{t('roles.table.status') || 'Status'}</Th>
                             <Th>{t('roles.table.permissions') || 'Permissions'}</Th>
                             <Th style={{ textAlign: 'center' }}>{t('roles.table.actions') || 'Actions'}</Th>
@@ -282,11 +314,11 @@ const RolesPage = () => {
                             ))
                         ) : paginatedRoles.length === 0 ? (
                             <Tr>
-                                <Td colSpan={4}>
+                                <Td colSpan={4} style={{ padding: 0 }}>
                                     <EmptyState
                                         icon={Shield}
                                         title={t('roles.empty') || 'No roles found'}
-                                        description={appliedSearch ? t('roles.empty_search') : 'Get started by creating a new role.'}
+                                        description={searchTerm ? t('roles.empty_search') : 'Get started by creating a new role.'}
                                         actionLabel={t('roles.add') || 'Add Role'}
                                         onAction={canCreate ? handleCreate : null}
                                     />
@@ -306,7 +338,8 @@ const RolesPage = () => {
                                                 color: 'var(--color-primary)',
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                justifyContent: 'center'
+                                                justifyContent: 'center',
+                                                flexShrink: 0
                                             }}>
                                                 <Shield size={18} />
                                             </div>
@@ -388,13 +421,13 @@ const RolesPage = () => {
                 </Table>
 
                 {/* Pagination */}
-                {!loading && filteredRoles.length > 0 && (
+                {!loading && roles.length > 0 && (
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
-                        totalItems={filteredRoles.length}
+                        totalItems={roles.length}
                         itemsPerPage={itemsPerPage}
-                        onPageChange={setCurrentPage}
+                        onPageChange={handlePageChange}
                         t={t}
                     />
                 )}
@@ -444,7 +477,8 @@ const RolesPage = () => {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '0.75rem',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            flexWrap: 'wrap'
                         }}>
                             <div
                                 onClick={() => setFormData({ ...formData, enabled: !formData.enabled })}
@@ -455,7 +489,8 @@ const RolesPage = () => {
                                     backgroundColor: formData.enabled ? 'var(--color-success)' : 'var(--color-border)',
                                     position: 'relative',
                                     cursor: 'pointer',
-                                    transition: 'background-color 0.2s'
+                                    transition: 'background-color 0.2s',
+                                    flexShrink: 0
                                 }}
                             >
                                 <div style={{
@@ -503,12 +538,12 @@ const RolesPage = () => {
                         <div style={{
                             border: '1px solid var(--color-border)',
                             borderRadius: 'var(--radius-md)',
-                            overflow: 'hidden'
+                            overflow: 'auto'
                         }}>
                             {/* Header */}
                             <div style={{
                                 display: 'grid',
-                                gridTemplateColumns: '1fr repeat(4, 80px)',
+                                gridTemplateColumns: '1fr repeat(4, 60px)',
                                 gap: '0.5rem',
                                 padding: '0.75rem 1rem',
                                 backgroundColor: 'var(--color-background)',
@@ -516,7 +551,8 @@ const RolesPage = () => {
                                 fontSize: '0.75rem',
                                 fontWeight: 600,
                                 color: 'var(--color-text-secondary)',
-                                textTransform: 'uppercase'
+                                textTransform: 'uppercase',
+                                minWidth: '400px'
                             }}>
                                 <span>Module</span>
                                 {PERMISSION_ACTIONS.map(action => (
@@ -536,11 +572,12 @@ const RolesPage = () => {
                                         key={module.key}
                                         style={{
                                             display: 'grid',
-                                            gridTemplateColumns: '1fr repeat(4, 80px)',
+                                            gridTemplateColumns: '1fr repeat(4, 60px)',
                                             gap: '0.5rem',
                                             padding: '0.75rem 1rem',
                                             borderBottom: '1px solid var(--color-border)',
-                                            alignItems: 'center'
+                                            alignItems: 'center',
+                                            minWidth: '400px'
                                         }}
                                     >
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -589,7 +626,8 @@ const RolesPage = () => {
                         gap: '0.75rem',
                         marginTop: '1.5rem',
                         paddingTop: '1rem',
-                        borderTop: '1px solid var(--color-border)'
+                        borderTop: '1px solid var(--color-border)',
+                        flexWrap: 'wrap'
                     }}>
                         <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
                             {t('user.form.cancel') || 'Cancel'}
@@ -615,6 +653,22 @@ const RolesPage = () => {
                 variant="danger"
                 loading={deleting}
             />
+
+            {/* Responsive styles */}
+            <style>{`
+                @media (max-width: 640px) {
+                    .page-actions {
+                        flex-direction: column;
+                        align-items: stretch;
+                    }
+                    .page-actions > div:first-child {
+                        max-width: none;
+                    }
+                    .btn-text {
+                        display: none;
+                    }
+                }
+            `}</style>
         </div>
     );
 };
