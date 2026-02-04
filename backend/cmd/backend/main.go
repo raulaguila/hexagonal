@@ -40,8 +40,8 @@ func initLogger(cfg *config.Environment) *loggerx.Logger {
 		loggerx.WithLevel(loggerx.ParseLogLevel(cfg.LogLevel)),
 		loggerx.WithSink(sink.NewStdout(sink.WithFormatter(fmt()))),
 		loggerx.WithFields(map[string]any{"version": cfg.Version}),
-		// loggerx.WithTimeFormat(time.DateTime),
 		// loggerx.WithSink(fileSink),
+		// loggerx.WithTimeFormat(time.DateTime),
 	)
 }
 
