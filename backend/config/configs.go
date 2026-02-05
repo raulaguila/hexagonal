@@ -11,8 +11,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/godeh/dotenvgo"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/raulaguila/go-api/pkg/envx"
 )
 
@@ -98,16 +99,16 @@ func MustLoad() *Environment {
 
 // Load loads configuration from environment
 func load() (*Environment, error) {
-	if err := envx.LoadDotEnvOverride(path.Join("config", ".env")); err != nil {
+	if err := dotenvgo.LoadDotEnvOverride(path.Join("config", ".env")); err != nil {
 		_, b, _, _ := runtime.Caller(0)
-		if err := envx.LoadDotEnvOverride(path.Join(path.Dir(b), "..", "config", ".env")); err != nil {
+		if err := dotenvgo.LoadDotEnvOverride(path.Join(path.Dir(b), "..", "config", ".env")); err != nil {
 			fmt.Printf("Failed to load environment file: %v\n", err)
 			os.Exit(1)
 		}
 	}
 
 	env := &Environment{}
-	if err := envx.Load(env); err != nil {
+	if err := dotenvgo.Load(env); err != nil {
 		fmt.Printf("Failed to parse environments: %v\n", err)
 		os.Exit(1)
 	}
