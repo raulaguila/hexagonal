@@ -1,0 +1,95 @@
+/* Toast.module.css */
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border-width: 1px;
+    border-style: solid;
+    border-left-width: 4px;
+    min-width: 280px;
+    max-width: 420px;
+    pointer-events: auto;
+
+    /* Animation initial state */
+    transform: translateX(120%);
+    opacity: 0;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast.visible {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.content {
+    flex: 1;
+    font-size: 0.875rem;
+    color: var(--color-text-main);
+    font-weight: 500;
+}
+
+.closeButton {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s;
+}
+
+.closeButton:hover {
+    color: var(--color-text-main);
+}
+
+/* Icon Styles */
+.icon {
+    flex-shrink: 0;
+}
+
+/* Variants */
+.success {
+    border-color: #10b981;
+    /* Fallback */
+    border-left-color: #10b981;
+}
+
+.error {
+    border-color: #ef4444;
+    border-left-color: #ef4444;
+}
+
+.warning {
+    border-color: #f59e0b;
+    border-left-color: #f59e0b;
+}
+
+.info {
+    border-color: #6366f1;
+    border-left-color: #6366f1;
+}
+
+/* Variant Icon Colors */
+.success .icon {
+    color: #10b981;
+}
+
+.error .icon {
+    color: #ef4444;
+}
+
+.warning .icon {
+    color: #f59e0b;
+}
+
+.info .icon {
+    color: #6366f1;
+}

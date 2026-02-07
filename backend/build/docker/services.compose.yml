@@ -21,12 +21,20 @@ services:
 
     hostname: postgres
     container_name: api_postgres
-    image: postgres:17.2-alpine
+    image: api_postgres
+    build:
+      context: ./postgres
+      dockerfile: Dockerfile
+    # image: postgres:17.2-alpine
     restart: always
     volumes:
       - postgres_volume:/var/lib/postgresql/data
       # - ../db/SQL/:/docker-entrypoint-initdb.d
-    command: -p ${POSTGRES_PORT}
+    command: >
+      postgres
+      -p ${POSTGRES_PORT}
+      -c shared_preload_libraries='pg_cron'
+      -c cron.database_name='${POSTGRES_BASE}'
     ports:
       - ${POSTGRES_PORT}:${POSTGRES_PORT}
     environment:

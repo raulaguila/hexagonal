@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './Card.module.css';
 
 /**
  * Card component for content sections
@@ -12,15 +13,8 @@ function Card({
 }) {
     return (
         <div
-            className={className}
-            style={{
-                backgroundColor: 'var(--color-surface)',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--color-border)',
-                boxShadow: 'var(--shadow-sm)',
-                padding,
-                ...style
-            }}
+            className={`${styles.card} ${className}`}
+            style={{ padding, ...style }}
             {...props}
         >
             {children}
@@ -33,47 +27,26 @@ function Card({
  */
 function StatCard({ title, value, icon: Icon, color = 'var(--color-primary)', trend }) {
     return (
-        <Card style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <Card className={styles.statCard}>
             <div
+                className={styles.iconWrapper}
                 style={{
-                    padding: '0.75rem',
-                    borderRadius: 'var(--radius-md)',
                     backgroundColor: `${color}15`,
                     color: color
                 }}
             >
                 {Icon && <Icon size={24} />}
             </div>
-            <div style={{ flex: 1 }}>
-                <h3
-                    style={{
-                        margin: 0,
-                        fontSize: '0.875rem',
-                        color: 'var(--color-text-secondary)',
-                        fontWeight: 500
-                    }}
-                >
+            <div className={styles.content}>
+                <h3 className={styles.title}>
                     {title}
                 </h3>
-                <p
-                    style={{
-                        margin: '0.25rem 0 0 0',
-                        fontSize: '1.5rem',
-                        fontWeight: 700,
-                        color: 'var(--color-text-main)'
-                    }}
-                >
+                <p className={styles.value}>
                     {value}
                 </p>
             </div>
             {trend && (
-                <div
-                    style={{
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        color: trend > 0 ? '#10b981' : '#ef4444'
-                    }}
-                >
+                <div className={`${styles.trend} ${trend > 0 ? styles.trendUp : styles.trendDown}`}>
                     {trend > 0 ? '+' : ''}{trend}%
                 </div>
             )}

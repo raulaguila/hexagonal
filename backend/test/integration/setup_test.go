@@ -8,6 +8,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/godeh/sloggergo"
+	"github.com/godeh/sloggergo/formatter"
+	"github.com/godeh/sloggergo/sink"
+	"github.com/testcontainers/testcontainers-go"
+	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
+	tcredis "github.com/testcontainers/testcontainers-go/modules/redis"
+	"github.com/testcontainers/testcontainers-go/wait"
+
 	"github.com/raulaguila/go-api/config"
 	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres"
 	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres/model"
@@ -15,14 +23,6 @@ import (
 	"github.com/raulaguila/go-api/internal/adapter/driver/rest"
 	"github.com/raulaguila/go-api/internal/core/domain/entity"
 	"github.com/raulaguila/go-api/internal/di"
-	"github.com/raulaguila/go-api/pkg/loggerx"
-	"github.com/raulaguila/go-api/pkg/loggerx/formatter"
-	"github.com/raulaguila/go-api/pkg/loggerx/sink"
-
-	"github.com/testcontainers/testcontainers-go"
-	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
-	tcredis "github.com/testcontainers/testcontainers-go/modules/redis"
-	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 var baseURL string
@@ -106,9 +106,9 @@ func TestMain(m *testing.M) {
 	cfg.RedisDB = 0
 
 	// Enable Logger for debugging (off for less noise in CI)
-	log := loggerx.New(
-		loggerx.WithLevel(loggerx.ErrorLevel), // Keep logs quiet unless error
-		loggerx.WithSink(sink.NewStdout(sink.WithFormatter(formatter.NewText()))),
+	log := sloggergo.New(
+		sloggergo.WithLevel(sloggergo.ErrorLevel), // Keep logs quiet unless error
+		sloggergo.WithSink(sink.NewStdout(sink.WithFormatter(formatter.NewText()))),
 	)
 
 	// Connect to DBs

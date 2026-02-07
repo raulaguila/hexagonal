@@ -1,0 +1,320 @@
+/* RolesPage.module.css */
+
+/* Header */
+.header {
+    margin-bottom: 1.5rem;
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--color-text-main);
+}
+
+.subtitle {
+    color: var(--color-text-secondary);
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+}
+
+/* Actions Row */
+.actionsRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.searchContainer {
+    display: flex;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+}
+
+.searchInput {
+    flex: 1;
+    padding: 0.625rem 1rem;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    color: var(--color-text-main);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    min-width: 0;
+}
+
+.searchInput:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* Table */
+.tableContainer {
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+}
+
+.roleInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.roleIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    background-color: var(--color-primary-light);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.roleName {
+    font-weight: 500;
+    color: var(--color-text-main);
+}
+
+.permissionsWrapper {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    max-width: 400px;
+}
+
+.noPermissions {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+.actionsCell {
+    text-align: center;
+}
+
+.actionsWrapper {
+    display: inline-flex;
+    gap: 0.25rem;
+    justify-content: center;
+}
+
+.actionBtn {
+    padding: 0.375rem;
+}
+
+.btnText {
+    display: inline;
+}
+
+.deleteBtn {
+    color: var(--color-error);
+}
+
+/* Modal Form */
+.label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--color-text-main);
+}
+
+.input {
+    width: 100%;
+    padding: 0.625rem 1rem;
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    color: var(--color-text-main);
+    outline: none;
+    box-sizing: border-box;
+}
+
+.inputError {
+    border-color: var(--color-error);
+}
+
+.errorMsg {
+    color: var(--color-error);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+/* Enabled Toggle */
+.enabledToggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.toggleSwitch {
+    width: 44px;
+    height: 24px;
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+}
+
+.toggleSwitchActive {
+    background-color: var(--color-success);
+}
+
+.toggleSwitchInactive {
+    background-color: var(--color-border);
+}
+
+.toggleKnob {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: white;
+    position: absolute;
+    top: 2px;
+    transition: left 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggleKnobActive {
+    left: 22px;
+}
+
+.toggleKnobInactive {
+    left: 2px;
+}
+
+.toggleLabel {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-main);
+}
+
+.toggleHint {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+/* Permissions Matrix */
+.permissionsSection {
+    margin-top: 1.5rem;
+}
+
+.permissionsLabel {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    color: var(--color-text-main);
+}
+
+.matrixContainer {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: auto;
+}
+
+.matrixHeader {
+    display: grid;
+    grid-template-columns: 1fr repeat(4, 60px);
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--color-background);
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    min-width: 400px;
+}
+
+.headerAction {
+    text-align: center;
+}
+
+.matrixRow {
+    display: grid;
+    grid-template-columns: 1fr repeat(4, 60px);
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-border);
+    align-items: center;
+    min-width: 400px;
+}
+
+.matrixRow:last-child {
+    border-bottom: none;
+}
+
+.moduleCell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.moduleCheckbox {
+    accent-color: var(--color-primary);
+}
+
+.moduleName {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-main);
+}
+
+.permissionCell {
+    text-align: center;
+}
+
+.permissionCheckbox {
+    accent-color: var(--color-primary);
+    width: 16px;
+    height: 16px;
+}
+
+/* Modal Actions */
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border);
+    flex-wrap: wrap;
+}
+
+/* Empty State */
+.emptyStateWrapper {
+    padding: 0;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .actionsRow {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .searchContainer {
+        max-width: none;
+    }
+
+    .btnText {
+        display: none;
+    }
+}

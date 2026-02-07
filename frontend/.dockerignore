@@ -1,0 +1,8 @@
+node_modules
+dist
+.git
+.gitignore
+*.md
+.env.example
+.DS_Store
+# Não ignorar .env - Vite precisa dele durante o build

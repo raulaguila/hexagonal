@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/godeh/sloggergo"
 	"github.com/gofiber/contrib/fiberi18n/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -23,7 +24,6 @@ import (
 	"github.com/raulaguila/go-api/internal/adapter/driver/rest/middleware"
 	"github.com/raulaguila/go-api/internal/adapter/driver/rest/presenter"
 	"github.com/raulaguila/go-api/internal/app"
-	"github.com/raulaguila/go-api/pkg/loggerx"
 )
 
 // RedisStorage adapts redis.Service to fiber.Storage
@@ -79,7 +79,7 @@ type Server struct {
 }
 
 // Logger is an alias for the logger package
-type Logger = loggerx.Logger
+type Logger = sloggergo.Logger
 
 // NewServer creates a new REST API server
 func NewServer(

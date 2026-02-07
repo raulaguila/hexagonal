@@ -2,6 +2,7 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "unaccent";
 CREATE EXTENSION IF NOT EXISTS "citext";
+CREATE EXTENSION IF NOT EXISTS "pg_cron";
 
 -- 1. ROLE
 CREATE TABLE if not exists public.usr_role (
@@ -97,7 +98,7 @@ ON CONFLICT DO NOTHING;
 CREATE TABLE IF NOT EXISTS sys_audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     actor_id UUID REFERENCES usr_user(id) ON DELETE SET NULL,
-    action TEXT NOT NULL,
+    "action" TEXT NOT NULL,
     resource_entity TEXT NOT NULL,
     resource_id TEXT NOT NULL,
     metadata JSONB,
@@ -107,10 +108,15 @@ CREATE TABLE IF NOT EXISTS sys_audit_logs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_sys_audit_logs_actor_id ON sys_audit_logs(actor_id);
-CREATE INDEX IF NOT EXISTS idx_sys_audit_logs_action ON sys_audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_sys_audit_logs_action ON sys_audit_logs("action");
 CREATE INDEX IF NOT EXISTS idx_sys_audit_logs_resource_entity ON sys_audit_logs(resource_entity);
 CREATE INDEX IF NOT EXISTS idx_sys_audit_logs_resource_id ON sys_audit_logs(resource_id);
 CREATE INDEX IF NOT EXISTS idx_sys_audit_logs_created_at ON sys_audit_logs(created_at);
+
+-- 6. CRON
+SELECT cron.schedule('delete_old_audits_logs', '30 3 * * *', $$
+    DELETE FROM sys_audit_logs WHERE created_at < now() - INTERVAL '390 days'
+$$);
 
 -- VIEWS
 -- Create view for simplified user details

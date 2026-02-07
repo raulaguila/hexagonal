@@ -1,0 +1,68 @@
+@baseUrl = http://localhost:9999/v1
+@authToken = {{login.response.body.accesstoken}}
+
+# You need to run the Login request in 02_auth.http first to populate the variable if using an environment file, 
+# or manually paste the token here for standalone testing.
+# VS Code REST Client extensions often share variables if configured, but to be safe, create a login request here too or just use a placeholder.
+
+# For this file to work standalone, let's include a login block or assume the user sets the token.
+# Let's assume the user copies the token or we re-authenticate.
+# Ideally, we used a shared environment, but file-scoped variables are standard.
+# I will include a Login request at the top for convenience.
+
+# @name login
+POST {{baseUrl}}/auth
+Content-Type: application/json
+
+{
+  "login": "admin",
+  "password": "12345678"
+}
+
+###
+
+@token = {{login.response.body.accesstoken}}
+
+### Create Role
+# @name createRole
+POST {{baseUrl}}/role
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "support_agent2",
+  "permissions": ["users:view", "roles:view"],
+  "enabled": true
+}
+
+###
+
+@roleId = {{createRole.response.body.object.id}}
+
+### Get Role By ID
+GET {{baseUrl}}/role/{{roleId}}
+Authorization: Bearer {{token}}
+
+### List Roles
+GET {{baseUrl}}/role?page=1&limit=10&sort=updated_at&order=desc
+Authorization: Bearer {{token}}
+
+### Update Role
+PUT {{baseUrl}}/role/{{roleId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "support_lead",
+  "permissions": ["users:view", "roles:view", "roles:edit"],
+  "enabled": true
+}
+
+### Delete Role
+DELETE {{baseUrl}}/role
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "ids": ["{{roleId}}"]
+}

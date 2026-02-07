@@ -11,19 +11,18 @@ import (
 	"github.com/raulaguila/go-api/internal/core/domain/entity"
 	"github.com/raulaguila/go-api/internal/core/dto"
 	"github.com/raulaguila/go-api/internal/core/port/input"
-	"github.com/raulaguila/go-api/internal/core/service/auditor"
 	"github.com/raulaguila/go-api/pkg/pgerror"
 )
 
 // RoleHandler handles role endpoints
 type RoleHandler struct {
 	useCase     input.RoleUseCase
-	auditor     auditor.Auditor
+	auditor     input.AuditorUseCase
 	handleError func(*fiber.Ctx, error) error
 }
 
 // NewRoleHandler creates a new RoleHandler and registers routes
-func NewRoleHandler(router fiber.Router, useCase input.RoleUseCase, aud auditor.Auditor, accessAuth fiber.Handler) {
+func NewRoleHandler(router fiber.Router, useCase input.RoleUseCase, aud input.AuditorUseCase, accessAuth fiber.Handler) {
 	handler := &RoleHandler{
 		useCase: useCase,
 		auditor: aud,
@@ -161,30 +160,32 @@ func (h *RoleHandler) createRole(c *fiber.Ctx) error {
 	}
 
 	// Audit log
-	if h.auditor != nil {
-		actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
-		var actorID *uuid.UUID
-		if actor != nil {
-			actorID = &actor.ID
-		}
-		resID := ""
-		if role.ID != nil {
-			resID = *role.ID
-		}
-		// Build metadata with DTO data
-		metadata := map[string]any{
-			"ip":         c.IP(),
-			"user_agent": c.Get("User-Agent"),
-		}
-		if roleDTO != nil {
-			metadata["input"] = map[string]any{
-				"name":        roleDTO.Name,
-				"enabled":     roleDTO.Enabled,
-				"permissions": roleDTO.Permissions,
+	go func(c *fiber.Ctx, input *dto.RoleInput, output *dto.RoleOutput) {
+		if h.auditor != nil {
+			actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
+			var actorID *uuid.UUID
+			if actor != nil {
+				actorID = &actor.ID
 			}
+			resID := ""
+			if output.ID != nil {
+				resID = *output.ID
+			}
+			// Build metadata with DTO data
+			metadata := map[string]any{
+				"ip":         c.IP(),
+				"user_agent": c.Get("User-Agent"),
+			}
+			if input != nil {
+				metadata["input"] = map[string]any{
+					"name":        input.Name,
+					"enabled":     input.Enabled,
+					"permissions": input.Permissions,
+				}
+			}
+			h.auditor.Log(actorID, "create", "role", resID, metadata)
 		}
-		h.auditor.Log(c.Context(), actorID, "create", "role", resID, metadata)
-	}
+	}(c, roleDTO, role)
 
 	return presenter.Created(c, fiberi18n.MustLocalize(c, "roleCreated"), role)
 }
@@ -215,30 +216,33 @@ func (h *RoleHandler) updateRole(c *fiber.Ctx) error {
 	}
 
 	// Audit log
-	if h.auditor != nil {
-		actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
-		var actorID *uuid.UUID
-		if actor != nil {
-			actorID = &actor.ID
-		}
-		resID := ""
-		if role.ID != nil {
-			resID = *role.ID
-		}
-		// Build metadata with DTO data
-		metadata := map[string]any{
-			"ip":         c.IP(),
-			"user_agent": c.Get("User-Agent"),
-		}
-		if roleDTO != nil {
-			metadata["input"] = map[string]any{
-				"name":        roleDTO.Name,
-				"enabled":     roleDTO.Enabled,
-				"permissions": roleDTO.Permissions,
+
+	go func(c *fiber.Ctx, input *dto.RoleInput, output *dto.RoleOutput) {
+		if h.auditor != nil {
+			actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
+			var actorID *uuid.UUID
+			if actor != nil {
+				actorID = &actor.ID
 			}
+			resID := ""
+			if output.ID != nil {
+				resID = *output.ID
+			}
+			// Build metadata with DTO data
+			metadata := map[string]any{
+				"ip":         c.IP(),
+				"user_agent": c.Get("User-Agent"),
+			}
+			if input != nil {
+				metadata["input"] = map[string]any{
+					"name":        input.Name,
+					"enabled":     input.Enabled,
+					"permissions": input.Permissions,
+				}
+			}
+			h.auditor.Log(actorID, "update", "role", resID, metadata)
 		}
-		h.auditor.Log(c.Context(), actorID, "update", "role", resID, metadata)
-	}
+	}(c, roleDTO, role)
 
 	return presenter.New(c, fiber.StatusOK, fiberi18n.MustLocalize(c, "roleUpdated"), role)
 }
@@ -264,19 +268,21 @@ func (h *RoleHandler) deleteRoles(c *fiber.Ctx) error {
 	}
 
 	// Audit log
-	if h.auditor != nil {
-		actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
-		var actorID *uuid.UUID
-		if actor != nil {
-			actorID = &actor.ID
+	go func(c *fiber.Ctx, input *dto.IDsInput) {
+		if h.auditor != nil {
+			actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
+			var actorID *uuid.UUID
+			if actor != nil {
+				actorID = &actor.ID
+			}
+			for _, deletedID := range input.IDs {
+				h.auditor.Log(actorID, "delete", "role", deletedID, map[string]any{
+					"ip":         c.IP(),
+					"user_agent": c.Get("User-Agent"),
+				})
+			}
 		}
-		for _, deletedID := range toDelete.IDs {
-			h.auditor.Log(c.Context(), actorID, "delete", "role", deletedID, map[string]interface{}{
-				"ip":         c.IP(),
-				"user_agent": c.Get("User-Agent"),
-			})
-		}
-	}
+	}(c, toDelete)
 
 	return presenter.New(c, fiber.StatusOK, fiberi18n.MustLocalize(c, "roleDeleted"), nil)
 }

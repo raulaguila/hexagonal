@@ -1,0 +1,92 @@
+/* Table.module.css */
+
+.container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    min-width: 600px;
+}
+
+.thead {
+    background-color: var(--color-background);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.tr {
+    transition: background-color var(--transition-fast);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.tr:last-child {
+    border-bottom: none;
+}
+
+.tr:hover {
+    background-color: var(--color-surface-hover);
+}
+
+/* Th Styles */
+.th {
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    transition: background-color 0.15s;
+    white-space: nowrap;
+    text-align: left;
+    /* Default */
+}
+
+.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.sortable:hover {
+    background-color: rgba(99, 102, 241, 0.05);
+    /* Primary with opacity */
+}
+
+.headerContent {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sortIcon {
+    opacity: 0.3;
+    display: flex;
+    align-items: center;
+}
+
+.sortIcon.active {
+    opacity: 1;
+}
+
+/* Td Styles */
+.td {
+    padding: 1rem;
+    font-size: 0.875rem;
+    color: var(--color-text-main);
+}
+
+/* Responsive Sticky Column */
+@media (max-width: 768px) {
+    .tr td:first-child {
+        position: sticky;
+        left: 0;
+        background: var(--color-surface);
+        z-index: 1;
+    }
+
+    .tr:hover td:first-child {
+        background: var(--color-surface-hover);
+    }
+}

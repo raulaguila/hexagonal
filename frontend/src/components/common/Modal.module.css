@@ -1,0 +1,98 @@
+/* Modal.module.css */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+}
+
+.modal {
+    position: relative;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    width: 100%;
+    margin: 1.5rem;
+    max-height: calc(100vh - 3rem);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--color-border);
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Sizes */
+.sm {
+    max-width: 400px;
+}
+
+.md {
+    max-width: 500px;
+}
+
+.lg {
+    max-width: 800px;
+}
+
+.xl {
+    max-width: 1100px;
+}
+
+/* Header */
+.header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text-main);
+}
+
+.closeButton {
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: var(--radius-sm);
+    transition: color 0.2s, background-color 0.2s;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.closeButton:hover {
+    color: var(--color-text-main);
+    background-color: var(--color-background);
+}
+
+/* Body */
+.body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}

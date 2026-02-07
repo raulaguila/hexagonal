@@ -91,6 +91,8 @@ definitions:
     type: object
   github_com_raulaguila_go-api_internal_core_dto.RoleInput:
     properties:
+      enabled:
+        type: boolean
       name:
         maxLength: 100
         minLength: 4
@@ -102,6 +104,8 @@ definitions:
     type: object
   github_com_raulaguila_go-api_internal_core_dto.RoleOutput:
     properties:
+      enabled:
+        type: boolean
       id:
         type: string
       name:
@@ -132,8 +136,6 @@ definitions:
     type: object
   github_com_raulaguila_go-api_internal_core_dto.UserOutput:
     properties:
-      corp_id:
-        type: string
       email:
         type: string
       id:
@@ -142,12 +144,18 @@ definitions:
         type: string
       new:
         type: boolean
+      permissions:
+        items:
+          type: string
+        type: array
       roles:
         items:
           $ref: '#/definitions/github_com_raulaguila_go-api_internal_core_dto.RoleOutput'
         type: array
       status:
         type: boolean
+      username:
+        type: string
     type: object
   internal_adapter_driver_rest_handler.CheckResult:
     properties:

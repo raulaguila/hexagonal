@@ -5,15 +5,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/godeh/sloggergo"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/trace"
-
-	"github.com/raulaguila/go-api/pkg/loggerx"
 )
 
-// RequestLogger returns a middleware that logs HTTP requests using loggerx
-func RequestLogger(log *loggerx.Logger) fiber.Handler {
+// RequestLogger returns a middleware that logs HTTP requests using sloggergo
+func RequestLogger(log *sloggergo.Logger) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		start := time.Now()
 

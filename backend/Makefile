@@ -104,6 +104,14 @@ check-system: ## Check required tools
 # =========================
 # 1. Environment & Setup
 # =========================
+.PHONY: clean
+clean: ## Clean build folder
+	@echo "$(BLUE)🏗️  Cleaning build folder...$(RESET)"
+	@-rm -r $(PROJECT_BIN_PATH)/ 2> /dev/null || true
+	@echo "$(BLUE)🏗️  Cleaning cache...$(RESET)"
+	@-$(GO) clean -cache -modcache -testcache
+	@echo "$(GREEN)✅ Build folder cleaned successfully.$(RESET)\n"
+
 .PHONY: init
 init: ## Create environment file
 	@echo "$(BLUE)⚙️  Initializing environment setup...$(RESET)"
@@ -114,7 +122,7 @@ init: ## Create environment file
 tidy: ## Clean and tidy dependencies
 	@echo "$(YELLOW)🔧 Cleaning and tidying Go dependencies...$(RESET)"
 	@$(GO) mod tidy -v 2>&1 > /dev/null
-	@echo "$(GREEN)✅Dependencies tidied successfully.$(RESET)\n"
+	@echo "$(GREEN)✅ Dependencies tidied successfully.$(RESET)\n"
 
 .PHONY: list-updates
 list-updates: ## List available direct dependency updates
@@ -127,7 +135,7 @@ scaffold: ## Generate boilerplate code for a new module (Usage: make scaffold mo
 	@echo "$(BLUE)🚀 Generating code for module $(module)...$(RESET)"
 	@$(GO) run cmd/scaffold/main.go -name $(module)
 	@echo "$(GREEN)✅ Module $(module) structure created!$(RESET)\n"
-	@echo "$(YELLOW)Don't forget to run 'make tidy' and update DI container!$(RESET)\n"
+	@echo "$(YELLOW) Don't forget to run 'make tidy' and update DI container!$(RESET)\n"
 
 # =========================
 # 2. Quality & Testing
@@ -180,19 +188,19 @@ swag: ## Update swagger files
 
 .PHONY: build
 build: ## Build all applications from source code
-	@echo "$(BLUE)🏗️ Building application...$(RESET)"
-	@-rm -r $(PROJECT_BIN_PATH)/ 2> /dev/null
+	@echo "$(BLUE)🏗️  Building application...$(RESET)"
+	@-rm -r $(PROJECT_BIN_PATH)/ 2> /dev/null || true
 	@${GOBUILD} -o $(PROJECT_BIN_PATH)/backend cmd/backend/main.go
-	@echo "$(GREEN)✅  Build completed successfully!$(RESET)\n"
+	@echo "$(GREEN)✅ Build completed successfully!$(RESET)\n"
 
 .PHONY: zip
 zip: build ## Build the application and zip it
 	@echo "$(BLUE)📦 Zipping application...$(RESET)"
-	@-rm $(PROJECT_ZIP_NAME) 2> /dev/null
+	@-rm $(PROJECT_ZIP_NAME) 2> /dev/null || true
 	@cp .github/README.md README.md
 	@zip -qr $(PROJECT_ZIP_NAME) config/.env build/* bin/ README.md Makefile
 	@rm README.md
-	@echo "$(GREEN)✅  Zipped successfully!$(RESET)\n"
+	@echo "$(GREEN)✅ Zipped successfully!$(RESET)\n"
 
 # =========================
 # 4. Database Migrations
@@ -204,6 +212,7 @@ DB_USER := $(shell grep "^POSTGRES_USER" config/.env | cut -d '=' -f2 | cut -d '
 DB_PASS := $(shell grep "^POSTGRES_PASS" config/.env | cut -d '=' -f2 | cut -d '\#' -f1 | tr -d "'[:space:]")
 DB_PORT := $(shell grep "^POSTGRES_PORT" config/.env | cut -d '=' -f2 | cut -d '\#' -f1 | tr -d "'[:space:]")
 DB_NAME := $(shell grep "^POSTGRES_BASE" config/.env | cut -d '=' -f2 | cut -d '\#' -f1 | tr -d "'[:space:]")
+
 # Migration URL (always localhost for running from host)
 MIGRATE_URL := "postgres://$(DB_USER):$(DB_PASS)@localhost:$(DB_PORT)/$(DB_NAME)?sslmode=disable"
 

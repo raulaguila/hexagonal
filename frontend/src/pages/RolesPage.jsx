@@ -9,12 +9,12 @@ import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import Badge from '../components/common/Badge';
 import EmptyState from '../components/common/EmptyState';
-import Breadcrumbs from '../components/common/Breadcrumbs';
 import { ConfirmDialog, SkeletonTableRow } from '../components/feedback';
 import { Table, Thead, Tbody, Tr, Th, Td } from '../components/common/Table';
 import Pagination from '../components/common/Pagination';
 import { usePreferences } from '../context/PreferencesContext';
 import { roleSchema } from '../utils/schemas';
+import styles from './RolesPage.module.css';
 
 // Styled search input component
 const SearchInput = ({ value, onChange, onKeyDown, placeholder }) => (
@@ -24,26 +24,7 @@ const SearchInput = ({ value, onChange, onKeyDown, placeholder }) => (
         onChange={onChange}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
-        style={{
-            flex: 1,
-            padding: '0.625rem 1rem',
-            backgroundColor: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-md)',
-            fontSize: '0.875rem',
-            color: 'var(--color-text-main)',
-            outline: 'none',
-            transition: 'border-color 0.2s, box-shadow 0.2s',
-            minWidth: '0'
-        }}
-        onFocus={(e) => {
-            e.target.style.borderColor = 'var(--color-primary)';
-            e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
-        }}
-        onBlur={(e) => {
-            e.target.style.borderColor = 'var(--color-border)';
-            e.target.style.boxShadow = 'none';
-        }}
+        className={styles.searchInput}
     />
 );
 
@@ -248,36 +229,20 @@ const RolesPage = () => {
     const canDelete = hasPermission('roles:delete') || isRoot();
 
     return (
-        <div className="page-container">
+        <div className={styles.pageContainer}>
             {/* Header */}
-            <div style={{ marginBottom: '1.5rem' }}>
-                <h1 style={{
-                    fontSize: '1.5rem',
-                    fontWeight: 700,
-                    margin: 0,
-                    color: 'var(--color-text-main)'
-                }}>
+            <div className={styles.header}>
+                <h1 className={styles.title}>
                     {t('roles.title') || 'Roles & Permissions'}
                 </h1>
-                <p style={{
-                    color: 'var(--color-text-secondary)',
-                    marginTop: '0.25rem',
-                    fontSize: '0.875rem'
-                }}>
+                <p className={styles.subtitle}>
                     {t('roles.subtitle') || 'Manage access control and permissions'}
                 </p>
             </div>
 
             {/* Search and Actions Row */}
-            <div className="page-actions" style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1rem',
-                gap: '1rem',
-                flexWrap: 'wrap'
-            }}>
-                <div style={{ display: 'flex', gap: '0.5rem', flex: 1, minWidth: '200px', maxWidth: '400px' }}>
+            <div className={styles.actionsRow}>
+                <div className={styles.searchContainer}>
                     <SearchInput
                         placeholder={t('roles.search_placeholder') || 'Search roles...'}
                         value={searchTerm}
@@ -292,18 +257,13 @@ const RolesPage = () => {
                 {canCreate && (
                     <Button onClick={handleCreate} variant="primary">
                         <Plus size={18} />
-                        <span className="btn-text">{t('roles.add') || 'Add Role'}</span>
+                        <span className={styles.btnText}>{t('roles.add') || 'Add Role'}</span>
                     </Button>
                 )}
             </div>
 
             {/* Table */}
-            <div style={{
-                backgroundColor: 'var(--color-surface)',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--color-border)',
-                overflow: 'hidden'
-            }}>
+            <div className={styles.tableContainer}>
                 <Table>
                     <Thead>
                         <Tr>
@@ -327,7 +287,7 @@ const RolesPage = () => {
                             ))
                         ) : paginatedRoles.length === 0 ? (
                             <Tr>
-                                <Td colSpan={4} style={{ padding: 0 }}>
+                                <Td colSpan={4} className={styles.emptyStateWrapper}>
                                     <EmptyState
                                         icon={Shield}
                                         title={t('roles.empty') || 'No roles found'}
@@ -339,24 +299,14 @@ const RolesPage = () => {
                             </Tr>
                         ) : (
                             paginatedRoles.map(role => (
-                                <Tr key={role.id} className="table-row">
+                                <Tr key={role.id}>
                                     {/* Role Name */}
                                     <Td>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                            <div style={{
-                                                width: '36px',
-                                                height: '36px',
-                                                borderRadius: 'var(--radius-md)',
-                                                backgroundColor: 'var(--color-primary-light)',
-                                                color: 'var(--color-primary)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                flexShrink: 0
-                                            }}>
+                                        <div className={styles.roleInfo}>
+                                            <div className={styles.roleIcon}>
                                                 <Shield size={18} />
                                             </div>
-                                            <span style={{ fontWeight: 500, color: 'var(--color-text-main)' }}>
+                                            <span className={styles.roleName}>
                                                 {role.name}
                                             </span>
                                         </div>
@@ -374,12 +324,7 @@ const RolesPage = () => {
 
                                     {/* Permissions Preview */}
                                     <Td>
-                                        <div style={{
-                                            display: 'flex',
-                                            gap: '0.25rem',
-                                            flexWrap: 'wrap',
-                                            maxWidth: '400px'
-                                        }}>
+                                        <div className={styles.permissionsWrapper}>
                                             {role.permissions?.slice(0, 4).map(p => (
                                                 <Badge key={p} variant="default" size="sm">
                                                     {p}
@@ -391,11 +336,7 @@ const RolesPage = () => {
                                                 </Badge>
                                             )}
                                             {(!role.permissions || role.permissions.length === 0) && (
-                                                <span style={{
-                                                    fontSize: '0.75rem',
-                                                    color: 'var(--color-text-muted)',
-                                                    fontStyle: 'italic'
-                                                }}>
+                                                <span className={styles.noPermissions}>
                                                     No permissions assigned
                                                 </span>
                                             )}
@@ -403,14 +344,14 @@ const RolesPage = () => {
                                     </Td>
 
                                     {/* Actions - Centered */}
-                                    <Td style={{ textAlign: 'center' }}>
-                                        <div style={{ display: 'inline-flex', gap: '0.25rem', justifyContent: 'center' }}>
+                                    <Td className={styles.actionsCell}>
+                                        <div className={styles.actionsWrapper}>
                                             {canEdit && (
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => handleEdit(role)}
-                                                    style={{ padding: '0.375rem' }}
+                                                    className={styles.actionBtn}
                                                 >
                                                     <Pen size={16} />
                                                 </Button>
@@ -420,7 +361,7 @@ const RolesPage = () => {
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => handleDeleteClick(role)}
-                                                    style={{ padding: '0.375rem', color: 'var(--color-error)' }}
+                                                    className={`${styles.actionBtn} ${styles.deleteBtn}`}
                                                 >
                                                     <Trash2 size={16} />
                                                 </Button>
@@ -455,33 +396,17 @@ const RolesPage = () => {
             >
                 <form onSubmit={formSubmit(onSubmit)}>
                     <div>
-                        <label style={{
-                            display: 'block',
-                            fontSize: '0.875rem',
-                            fontWeight: 500,
-                            marginBottom: '0.5rem',
-                            color: 'var(--color-text-main)'
-                        }}>
+                        <label className={styles.label}>
                             {t('role.form.name') || 'Role Name'}
                         </label>
                         <input
                             type="text"
                             {...register('name')}
                             placeholder="e.g. EDITOR"
-                            style={{
-                                width: '100%',
-                                padding: '0.625rem 1rem',
-                                backgroundColor: 'var(--color-background)',
-                                border: errors.name ? '1px solid var(--color-error)' : '1px solid var(--color-border)',
-                                borderRadius: 'var(--radius-md)',
-                                fontSize: '0.875rem',
-                                color: 'var(--color-text-main)',
-                                outline: 'none',
-                                boxSizing: 'border-box'
-                            }}
+                            className={`${styles.input} ${errors.name ? styles.inputError : ''}`}
                         />
                         {errors.name && (
-                            <span style={{ color: 'var(--color-error)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                            <span className={styles.errorMsg}>
                                 {errors.name.message}
                             </span>
                         )}
@@ -489,49 +414,17 @@ const RolesPage = () => {
 
                     {/* Enabled Status */}
                     <div style={{ marginTop: '1rem' }}>
-                        <label style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            cursor: 'pointer',
-                            flexWrap: 'wrap'
-                        }}>
+                        <label className={styles.enabledToggle}>
                             <div
                                 onClick={() => setValue('enabled', !watchEnabled)}
-                                style={{
-                                    width: '44px',
-                                    height: '24px',
-                                    borderRadius: '12px',
-                                    backgroundColor: watchEnabled ? 'var(--color-success)' : 'var(--color-border)',
-                                    position: 'relative',
-                                    cursor: 'pointer',
-                                    transition: 'background-color 0.2s',
-                                    flexShrink: 0
-                                }}
+                                className={`${styles.toggleSwitch} ${watchEnabled ? styles.toggleSwitchActive : styles.toggleSwitchInactive}`}
                             >
-                                <div style={{
-                                    width: '20px',
-                                    height: '20px',
-                                    borderRadius: '50%',
-                                    backgroundColor: 'white',
-                                    position: 'absolute',
-                                    top: '2px',
-                                    left: watchEnabled ? '22px' : '2px',
-                                    transition: 'left 0.2s',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                                }} />
+                                <div className={`${styles.toggleKnob} ${watchEnabled ? styles.toggleKnobActive : styles.toggleKnobInactive}`} />
                             </div>
-                            <span style={{
-                                fontSize: '0.875rem',
-                                fontWeight: 500,
-                                color: 'var(--color-text-main)'
-                            }}>
+                            <span className={styles.toggleLabel}>
                                 {t('role.form.enabled') || 'Role Enabled'}
                             </span>
-                            <span style={{
-                                fontSize: '0.75rem',
-                                color: 'var(--color-text-muted)'
-                            }}>
+                            <span className={styles.toggleHint}>
                                 {watchEnabled
                                     ? (t('role.form.enabled_hint') || 'Users with this role can access the system')
                                     : (t('role.form.disabled_hint') || 'Users with only this role will be denied access')}
@@ -540,39 +433,17 @@ const RolesPage = () => {
                     </div>
 
                     {/* Permissions Matrix */}
-                    <div style={{ marginTop: '1.5rem' }}>
-                        <label style={{
-                            display: 'block',
-                            fontSize: '0.875rem',
-                            fontWeight: 500,
-                            marginBottom: '0.75rem',
-                            color: 'var(--color-text-main)'
-                        }}>
+                    <div className={styles.permissionsSection}>
+                        <label className={styles.permissionsLabel}>
                             {t('role.form.permissions') || 'Permissions'}
                         </label>
 
-                        <div style={{
-                            border: '1px solid var(--color-border)',
-                            borderRadius: 'var(--radius-md)',
-                            overflow: 'auto'
-                        }}>
+                        <div className={styles.matrixContainer}>
                             {/* Header */}
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: '1fr repeat(4, 60px)',
-                                gap: '0.5rem',
-                                padding: '0.75rem 1rem',
-                                backgroundColor: 'var(--color-background)',
-                                borderBottom: '1px solid var(--color-border)',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                color: 'var(--color-text-secondary)',
-                                textTransform: 'uppercase',
-                                minWidth: '400px'
-                            }}>
+                            <div className={styles.matrixHeader}>
                                 <span>Module</span>
                                 {PERMISSION_ACTIONS.map(action => (
-                                    <span key={action.key} style={{ textAlign: 'center' }}>
+                                    <span key={action.key} className={styles.headerAction}>
                                         {action.label}
                                     </span>
                                 ))}
@@ -586,28 +457,16 @@ const RolesPage = () => {
                                 return (
                                     <div
                                         key={module.key}
-                                        style={{
-                                            display: 'grid',
-                                            gridTemplateColumns: '1fr repeat(4, 60px)',
-                                            gap: '0.5rem',
-                                            padding: '0.75rem 1rem',
-                                            borderBottom: '1px solid var(--color-border)',
-                                            alignItems: 'center',
-                                            minWidth: '400px'
-                                        }}
+                                        className={styles.matrixRow}
                                     >
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <div className={styles.moduleCell}>
                                             <input
                                                 type="checkbox"
                                                 checked={allChecked}
                                                 onChange={() => toggleModule(module.key)}
-                                                style={{ accentColor: 'var(--color-primary)' }}
+                                                className={styles.moduleCheckbox}
                                             />
-                                            <span style={{
-                                                fontSize: '0.875rem',
-                                                fontWeight: 500,
-                                                color: 'var(--color-text-main)'
-                                            }}>
+                                            <span className={styles.moduleName}>
                                                 {module.label}
                                             </span>
                                         </div>
@@ -615,16 +474,12 @@ const RolesPage = () => {
                                         {PERMISSION_ACTIONS.map(action => {
                                             const perm = `${module.key}:${action.key}`;
                                             return (
-                                                <div key={perm} style={{ textAlign: 'center' }}>
+                                                <div key={perm} className={styles.permissionCell}>
                                                     <input
                                                         type="checkbox"
                                                         checked={watchPermissions.includes(perm)}
                                                         onChange={() => togglePermission(perm)}
-                                                        style={{
-                                                            accentColor: 'var(--color-primary)',
-                                                            width: '16px',
-                                                            height: '16px'
-                                                        }}
+                                                        className={styles.permissionCheckbox}
                                                     />
                                                 </div>
                                             );
@@ -636,15 +491,7 @@ const RolesPage = () => {
                     </div>
 
                     {/* Actions */}
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        gap: '0.75rem',
-                        marginTop: '1.5rem',
-                        paddingTop: '1rem',
-                        borderTop: '1px solid var(--color-border)',
-                        flexWrap: 'wrap'
-                    }}>
+                    <div className={styles.modalActions}>
                         <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
                             {t('user.form.cancel') || 'Cancel'}
                         </Button>
@@ -669,22 +516,6 @@ const RolesPage = () => {
                 variant="danger"
                 loading={deleting}
             />
-
-            {/* Responsive styles */}
-            <style>{`
-                @media (max-width: 640px) {
-                    .page-actions {
-                        flex-direction: column;
-                        align-items: stretch;
-                    }
-                    .page-actions > div:first-child {
-                        max-width: none;
-                    }
-                    .btn-text {
-                        display: none;
-                    }
-                }
-            `}</style>
         </div>
     );
 };

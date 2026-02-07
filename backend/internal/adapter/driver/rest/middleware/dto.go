@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/raulaguila/go-api/pkg/validator"
 )
 
 // Lookup determines where to look for the DTO
@@ -72,6 +73,11 @@ func ParseDTO(config ...DTOConfig) fiber.Handler {
 		obj, err := parser(c, obj)
 		if err != nil {
 			fmt.Printf("Error parsing DTO: %v - %v\n", err, reflect.TypeOf(cfg.Model))
+			return cfg.ErrorHandler(c, err)
+		}
+
+		// Validate struct
+		if err := validator.StructValidator.Validate(obj); err != nil {
 			return cfg.ErrorHandler(c, err)
 		}
 

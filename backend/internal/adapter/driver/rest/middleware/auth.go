@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 
+	"github.com/godeh/sloggergo"
 	"github.com/gofiber/contrib/fiberi18n/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/keyauth"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/raulaguila/go-api/internal/adapter/driver/rest/presenter"
 	"github.com/raulaguila/go-api/internal/core/port/output"
-	"github.com/raulaguila/go-api/pkg/loggerx"
 )
 
 const (
@@ -29,8 +29,8 @@ type AuthConfig struct {
 	PrivateKey    *rsa.PrivateKey
 	UserRepo      output.UserRepository
 	TokenRepo     output.TokenRepository
-	AllowSkipAuth bool            // Injected config instead of os.Getenv
-	Log           *loggerx.Logger // Injected logger instead of log.Println
+	AllowSkipAuth bool              // Injected config instead of os.Getenv
+	Log           *sloggergo.Logger // Injected logger instead of log.Println
 }
 
 // Auth creates an authentication middleware

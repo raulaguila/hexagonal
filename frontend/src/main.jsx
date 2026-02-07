@@ -7,6 +7,7 @@ import { ToastProvider } from './components/feedback/ToastProvider.jsx'
 import ErrorBoundary from './components/feedback/ErrorBoundary.jsx'
 import queryClient from './services/queryClient.js'
 import './assets/variables.css'
+import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

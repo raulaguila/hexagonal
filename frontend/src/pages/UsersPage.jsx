@@ -9,12 +9,12 @@ import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
 import Badge from '../components/common/Badge';
 import EmptyState from '../components/common/EmptyState';
-import Breadcrumbs from '../components/common/Breadcrumbs';
 import { ConfirmDialog, SkeletonTableRow } from '../components/feedback';
 import { Table, Thead, Tbody, Tr, Th, Td } from '../components/common/Table';
 import Pagination from '../components/common/Pagination';
 import { usePreferences } from '../context/PreferencesContext';
 import { userSchema } from '../utils/schemas';
+import styles from './UsersPage.module.css';
 
 // Styled search input component
 const SearchInput = ({ value, onChange, onKeyDown, placeholder }) => (
@@ -24,26 +24,7 @@ const SearchInput = ({ value, onChange, onKeyDown, placeholder }) => (
         onChange={onChange}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
-        style={{
-            flex: 1,
-            padding: '0.625rem 1rem',
-            backgroundColor: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-md)',
-            fontSize: '0.875rem',
-            color: 'var(--color-text-main)',
-            outline: 'none',
-            transition: 'border-color 0.2s, box-shadow 0.2s',
-            minWidth: '0'
-        }}
-        onFocus={(e) => {
-            e.target.style.borderColor = 'var(--color-primary)';
-            e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
-        }}
-        onBlur={(e) => {
-            e.target.style.borderColor = 'var(--color-border)';
-            e.target.style.boxShadow = 'none';
-        }}
+        className={styles.searchInput}
     />
 );
 
@@ -218,36 +199,20 @@ const UsersPage = () => {
     const canDelete = hasPermission('users:delete') || isRoot();
 
     return (
-        <div className="page-container">
+        <div className={styles.pageContainer}>
             {/* Header */}
-            <div style={{ marginBottom: '1.5rem' }}>
-                <h1 style={{
-                    fontSize: '1.5rem',
-                    fontWeight: 700,
-                    margin: 0,
-                    color: 'var(--color-text-main)'
-                }}>
+            <div className={styles.header}>
+                <h1 className={styles.title}>
                     {t('users.title') || 'Users'}
                 </h1>
-                <p style={{
-                    color: 'var(--color-text-secondary)',
-                    marginTop: '0.25rem',
-                    fontSize: '0.875rem'
-                }}>
+                <p className={styles.subtitle}>
                     {t('users.subtitle') || 'Manage system access and profiles'}
                 </p>
             </div>
 
             {/* Search and Actions Row */}
-            <div className="page-actions" style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1rem',
-                gap: '1rem',
-                flexWrap: 'wrap'
-            }}>
-                <div style={{ display: 'flex', gap: '0.5rem', flex: 1, minWidth: '200px', maxWidth: '400px' }}>
+            <div className={styles.actionsRow}>
+                <div className={styles.searchContainer}>
                     <SearchInput
                         placeholder={t('users.search_placeholder') || 'Search users...'}
                         value={search}
@@ -262,18 +227,13 @@ const UsersPage = () => {
                 {canCreate && (
                     <Button onClick={handleCreate} variant="primary">
                         <Plus size={18} />
-                        <span className="btn-text">{t('users.add') || 'Add User'}</span>
+                        <span className={styles.btnText}>{t('users.add') || 'Add User'}</span>
                     </Button>
                 )}
             </div>
 
             {/* Table */}
-            <div style={{
-                backgroundColor: 'var(--color-surface)',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--color-border)',
-                overflow: 'hidden'
-            }}>
+            <div className={styles.tableContainer}>
                 <Table>
                     <Thead>
                         <Tr>
@@ -294,7 +254,7 @@ const UsersPage = () => {
                                 {t('users.table.contact') || 'Contact'}
                             </Th>
                             <Th>{t('users.table.roles') || 'Roles'}</Th>
-                            <Th>{t('users.table.status') || 'Status'}</Th>
+                            <Th style={{ textAlign: 'center' }}>{t('users.table.status') || 'Status'}</Th>
                             <Th style={{ textAlign: 'center' }}>{t('users.table.actions') || 'Actions'}</Th>
                         </Tr>
                     </Thead>
@@ -305,7 +265,7 @@ const UsersPage = () => {
                             ))
                         ) : users.length === 0 ? (
                             <Tr>
-                                <Td colSpan={5} style={{ padding: 0 }}>
+                                <Td colSpan={5} className={styles.emptyStateWrapper}>
                                     <EmptyState
                                         icon={User}
                                         title={t('users.empty') || 'No users found'}
@@ -317,43 +277,18 @@ const UsersPage = () => {
                             </Tr>
                         ) : (
                             users.map(user => (
-                                <Tr key={user.id} className="table-row">
+                                <Tr key={user.id}>
                                     {/* User Info */}
                                     <Td>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                            <div style={{
-                                                width: '40px',
-                                                height: '40px',
-                                                borderRadius: '50%',
-                                                background: 'linear-gradient(135deg, var(--color-primary-light), var(--color-surface))',
-                                                color: 'var(--color-primary)',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontWeight: 600,
-                                                fontSize: '1rem',
-                                                border: '1px solid var(--color-border)',
-                                                flexShrink: 0
-                                            }}>
+                                        <div className={styles.userInfo}>
+                                            <div className={styles.avatar}>
                                                 {user.name?.charAt(0) || '?'}
                                             </div>
-                                            <div style={{ minWidth: 0 }}>
-                                                <div style={{
-                                                    fontWeight: 500,
-                                                    color: 'var(--color-text-main)',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap'
-                                                }}>
+                                            <div className={styles.userDetails}>
+                                                <div className={styles.userName}>
                                                     {user.name}
                                                 </div>
-                                                <div style={{
-                                                    fontSize: '0.75rem',
-                                                    color: 'var(--color-text-muted)',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap'
-                                                }}>
+                                                <div className={styles.userUsername}>
                                                     @{user.username}
                                                 </div>
                                             </div>
@@ -362,20 +297,9 @@ const UsersPage = () => {
 
                                     {/* Contact */}
                                     <Td>
-                                        <div style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            color: 'var(--color-text-secondary)',
-                                            overflow: 'hidden'
-                                        }}>
-                                            <Mail size={14} style={{ flexShrink: 0 }} />
-                                            <span style={{
-                                                fontSize: '0.875rem',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
-                                            }}>
+                                        <div className={styles.contactInfo}>
+                                            <Mail size={14} className={styles.contactIcon} />
+                                            <span className={styles.contactEmail}>
                                                 {user.email}
                                             </span>
                                         </div>
@@ -383,7 +307,7 @@ const UsersPage = () => {
 
                                     {/* Roles */}
                                     <Td>
-                                        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                                        <div className={styles.rolesWrapper}>
                                             {user.roles?.slice(0, 2).map(role => (
                                                 <Badge key={role.id} variant="default" size="sm">
                                                     {role.name}
@@ -398,7 +322,7 @@ const UsersPage = () => {
                                     </Td>
 
                                     {/* Status */}
-                                    <Td>
+                                    <Td style={{ textAlign: 'center' }}>
                                         {user.status ? (
                                             <Badge variant="success" size="sm" dot>
                                                 {t('common.active') || 'Active'}
@@ -411,14 +335,14 @@ const UsersPage = () => {
                                     </Td>
 
                                     {/* Actions - Centered */}
-                                    <Td style={{ textAlign: 'center' }}>
-                                        <div style={{ display: 'inline-flex', gap: '0.25rem', justifyContent: 'center' }}>
+                                    <Td className={styles.actionsCell}>
+                                        <div className={styles.actionsWrapper}>
                                             {canEdit && (
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => handleEdit(user)}
-                                                    style={{ padding: '0.375rem' }}
+                                                    className={styles.actionBtn}
                                                 >
                                                     <Pen size={16} />
                                                 </Button>
@@ -428,7 +352,7 @@ const UsersPage = () => {
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => handleDeleteClick(user)}
-                                                    style={{ padding: '0.375rem', color: 'var(--color-error)' }}
+                                                    className={`${styles.actionBtn} ${styles.deleteBtn}`}
                                                 >
                                                     <Trash2 size={16} />
                                                 </Button>
@@ -462,103 +386,51 @@ const UsersPage = () => {
                 size="md"
             >
                 <form onSubmit={formSubmit(onSubmit)}>
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                        gap: '1rem'
-                    }}>
-                        <div style={{ gridColumn: '1 / -1' }}>
-                            <label style={{
-                                display: 'block',
-                                fontSize: '0.875rem',
-                                fontWeight: 500,
-                                marginBottom: '0.5rem',
-                                color: 'var(--color-text-main)'
-                            }}>
+                    <div className={styles.formGrid}>
+                        <div className={styles.fullWidth}>
+                            <label className={styles.label}>
                                 {t('user.form.name') || 'Full Name'}
                             </label>
                             <input
                                 type="text"
                                 {...register('name')}
                                 placeholder="e.g. John Doe"
-                                style={{
-                                    width: '100%',
-                                    padding: '0.625rem 1rem',
-                                    backgroundColor: 'var(--color-background)',
-                                    border: errors.name ? '1px solid var(--color-error)' : '1px solid var(--color-border)',
-                                    borderRadius: 'var(--radius-md)',
-                                    fontSize: '0.875rem',
-                                    color: 'var(--color-text-main)',
-                                    outline: 'none',
-                                    boxSizing: 'border-box'
-                                }}
+                                className={`${styles.input} ${errors.name ? styles.inputError : ''}`}
                             />
                             {errors.name && (
-                                <span style={{ color: 'var(--color-error)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                                <span className={styles.errorMsg}>
                                     {errors.name.message}
                                 </span>
                             )}
                         </div>
                         <div>
-                            <label style={{
-                                display: 'block',
-                                fontSize: '0.875rem',
-                                fontWeight: 500,
-                                marginBottom: '0.5rem',
-                                color: 'var(--color-text-main)'
-                            }}>
+                            <label className={styles.label}>
                                 {t('user.form.username') || 'Username'}
                             </label>
                             <input
                                 type="text"
                                 {...register('username')}
                                 placeholder="e.g. jdoe"
-                                style={{
-                                    width: '100%',
-                                    padding: '0.625rem 1rem',
-                                    backgroundColor: 'var(--color-background)',
-                                    border: errors.username ? '1px solid var(--color-error)' : '1px solid var(--color-border)',
-                                    borderRadius: 'var(--radius-md)',
-                                    fontSize: '0.875rem',
-                                    color: 'var(--color-text-main)',
-                                    outline: 'none',
-                                    boxSizing: 'border-box'
-                                }}
+                                className={`${styles.input} ${errors.username ? styles.inputError : ''}`}
                             />
                             {errors.username && (
-                                <span style={{ color: 'var(--color-error)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                                <span className={styles.errorMsg}>
                                     {errors.username.message}
                                 </span>
                             )}
                         </div>
                         <div>
-                            <label style={{
-                                display: 'block',
-                                fontSize: '0.875rem',
-                                fontWeight: 500,
-                                marginBottom: '0.5rem',
-                                color: 'var(--color-text-main)'
-                            }}>
+                            <label className={styles.label}>
                                 {t('user.form.email') || 'Email'}
                             </label>
                             <input
                                 type="email"
                                 {...register('email')}
                                 placeholder="john@example.com"
-                                style={{
-                                    width: '100%',
-                                    padding: '0.625rem 1rem',
-                                    backgroundColor: 'var(--color-background)',
-                                    border: errors.email ? '1px solid var(--color-error)' : '1px solid var(--color-border)',
-                                    borderRadius: 'var(--radius-md)',
-                                    fontSize: '0.875rem',
-                                    color: 'var(--color-text-main)',
-                                    outline: 'none',
-                                    boxSizing: 'border-box'
-                                }}
+                                className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
                             />
                             {errors.email && (
-                                <span style={{ color: 'var(--color-error)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                                <span className={styles.errorMsg}>
                                     {errors.email.message}
                                 </span>
                             )}
@@ -567,84 +439,45 @@ const UsersPage = () => {
 
                     {/* Roles Selection */}
                     <div style={{ marginTop: '1rem' }}>
-                        <label style={{
-                            display: 'block',
-                            fontSize: '0.875rem',
-                            fontWeight: 500,
-                            marginBottom: '0.5rem',
-                            color: 'var(--color-text-main)'
-                        }}>
+                        <label className={styles.label}>
                             {t('user.form.roles') || 'Assign Roles'}
                         </label>
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                            gap: '0.5rem'
-                        }}>
-                            {roles.map(role => (
-                                <label
-                                    key={role.id}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem',
-                                        padding: '0.5rem 0.75rem',
-                                        borderRadius: 'var(--radius-md)',
-                                        border: watchRoleIds.includes(role.id)
-                                            ? '1px solid var(--color-primary)'
-                                            : '1px solid var(--color-border)',
-                                        backgroundColor: watchRoleIds.includes(role.id)
-                                            ? 'var(--color-primary-light)'
-                                            : 'var(--color-surface)',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.15s'
-                                    }}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={watchRoleIds.includes(role.id)}
-                                        onChange={() => {
-                                            const newRoles = watchRoleIds.includes(role.id)
-                                                ? watchRoleIds.filter(id => id !== role.id)
-                                                : [...watchRoleIds, role.id];
-                                            setValue('role_ids', newRoles);
-                                        }}
-                                        style={{ accentColor: 'var(--color-primary)' }}
-                                    />
-                                    <span style={{
-                                        fontSize: '0.875rem',
-                                        fontWeight: watchRoleIds.includes(role.id) ? 600 : 400,
-                                        color: watchRoleIds.includes(role.id)
-                                            ? 'var(--color-primary)'
-                                            : 'var(--color-text-main)',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap'
-                                    }}>
-                                        {role.name}
-                                    </span>
-                                </label>
-                            ))}
+                        <div className={styles.rolesGrid}>
+                            {roles.map(role => {
+                                const isSelected = watchRoleIds.includes(role.id);
+                                return (
+                                    <label
+                                        key={role.id}
+                                        className={`${styles.roleOption} ${isSelected ? styles.roleOptionSelected : ''}`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() => {
+                                                const newRoles = isSelected
+                                                    ? watchRoleIds.filter(id => id !== role.id)
+                                                    : [...watchRoleIds, role.id];
+                                                setValue('role_ids', newRoles);
+                                            }}
+                                            className={styles.roleCheckbox}
+                                        />
+                                        <span className={`${styles.roleName} ${isSelected ? styles.roleNameSelected : ''}`}>
+                                            {role.name}
+                                        </span>
+                                    </label>
+                                );
+                            })}
                         </div>
                     </div>
 
                     {/* Status Toggle */}
                     <div style={{ marginTop: '1rem' }}>
-                        <label style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            cursor: 'pointer'
-                        }}>
+                        <label className={styles.statusToggle}>
                             <input
                                 type="checkbox"
                                 checked={watchStatus}
                                 onChange={(e) => setValue('status', e.target.checked)}
-                                style={{
-                                    width: '18px',
-                                    height: '18px',
-                                    accentColor: 'var(--color-primary)'
-                                }}
+                                className={styles.statusCheckbox}
                             />
                             <span style={{ fontSize: '0.875rem', color: 'var(--color-text-main)' }}>
                                 {t('user.form.active') || 'User is active'}
@@ -653,15 +486,7 @@ const UsersPage = () => {
                     </div>
 
                     {/* Actions */}
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        gap: '0.75rem',
-                        marginTop: '1.5rem',
-                        paddingTop: '1rem',
-                        borderTop: '1px solid var(--color-border)',
-                        flexWrap: 'wrap'
-                    }}>
+                    <div className={styles.modalActions}>
                         <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
                             {t('user.form.cancel') || 'Cancel'}
                         </Button>
@@ -686,22 +511,6 @@ const UsersPage = () => {
                 variant="danger"
                 loading={deleting}
             />
-
-            {/* Responsive styles */}
-            <style>{`
-                @media (max-width: 640px) {
-                    .page-actions {
-                        flex-direction: column;
-                        align-items: stretch;
-                    }
-                    .page-actions > div:first-child {
-                        max-width: none;
-                    }
-                    .btn-text {
-                        display: none;
-                    }
-                }
-            `}</style>
         </div>
     );
 };

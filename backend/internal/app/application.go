@@ -1,12 +1,12 @@
 package app
 
 import (
+	"github.com/godeh/sloggergo"
+
 	"github.com/raulaguila/go-api/config"
 	"github.com/raulaguila/go-api/internal/adapter/driven/storage/redis"
 	"github.com/raulaguila/go-api/internal/core/port/input"
 	"github.com/raulaguila/go-api/internal/core/port/output"
-	"github.com/raulaguila/go-api/internal/core/service/auditor"
-	"github.com/raulaguila/go-api/pkg/loggerx"
 )
 
 // Application is the main entry point for all business operations.
@@ -16,7 +16,7 @@ type Application struct {
 	Config *config.Environment
 
 	// Logging
-	Log *loggerx.Logger
+	Log *sloggergo.Logger
 
 	// Use Cases (Input Ports)
 	Auth input.AuthUseCase
@@ -30,7 +30,7 @@ type Application struct {
 	Redis *redis.Service
 
 	// Auditor for audit logging
-	Auditor auditor.Auditor
+	Auditor input.AuditorUseCase
 }
 
 // Repositories holds all repository implementations
@@ -51,7 +51,7 @@ type Options struct {
 type Option func(*Application)
 
 // WithLogger sets a custom logger
-func WithLogger(log *loggerx.Logger) Option {
+func WithLogger(log *sloggergo.Logger) Option {
 	return func(a *Application) {
 		a.Log = log
 	}
@@ -65,7 +65,7 @@ func WithRedis(redis *redis.Service) Option {
 }
 
 // WithAuditor sets the auditor service
-func WithAuditor(aud auditor.Auditor) Option {
+func WithAuditor(aud input.AuditorUseCase) Option {
 	return func(a *Application) {
 		a.Auditor = aud
 	}
@@ -74,7 +74,7 @@ func WithAuditor(aud auditor.Auditor) Option {
 // New creates a new Application instance with all dependencies wired up
 func New(
 	cfg *config.Environment,
-	log *loggerx.Logger,
+	log *sloggergo.Logger,
 	authUC input.AuthUseCase,
 	roleUC input.RoleUseCase,
 	userUC input.UserUseCase,

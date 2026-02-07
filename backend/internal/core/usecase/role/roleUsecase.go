@@ -85,10 +85,6 @@ func (uc *roleUseCase) GetRoleByID(ctx context.Context, id string) (*dto.RoleOut
 
 // CreateRole creates a new role
 func (uc *roleUseCase) CreateRole(ctx context.Context, input *dto.RoleInput) (*dto.RoleOutput, error) {
-	if err := input.Validate(); err != nil {
-		return nil, err
-	}
-
 	role := entity.NewRole(
 		utils.Deref(input.Name, ""),
 		utils.Deref(input.Permissions, []string{}),
@@ -115,10 +111,6 @@ func (uc *roleUseCase) UpdateRole(ctx context.Context, id string, input *dto.Rol
 	uid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, apperror.InvalidInput("id", "invalid uuid format")
-	}
-
-	if err := input.Validate(); err != nil {
-		return nil, err
 	}
 
 	role, err := uc.roleRepo.FindByID(ctx, uid)

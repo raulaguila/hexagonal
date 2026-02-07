@@ -1,0 +1,270 @@
+/* LoginPage.module.css */
+
+.container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-background);
+    transition: background-color 0.3s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Theme Toggle */
+.themeToggle {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: none;
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.themeToggle:hover {
+    transform: scale(1.05);
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode overrides for toggle specific to this page if needed, 
+   but variables should handle it. 
+   However, the original code had specific RGBA values for light/dark.
+   We will rely on transparency and variables. */
+:global([data-theme='dark']) .themeToggle {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+:global([data-theme='dark']) .themeToggle:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Login Card */
+.card {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    margin: 1rem;
+    background-color: var(--color-surface);
+    backdrop-filter: blur(20px);
+    /* Only works if surface has opacity, usually var(--color-surface) is solid. Layout check needed. */
+    border-radius: 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    /* Default light shadow */
+    border: 1px solid var(--color-border);
+    padding: 2.5rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+:global([data-theme='dark']) .card {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Logo Section */
+.logoSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.logoWrapper {
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, var(--color-primary) 0%, #818cf8 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--color-text-main);
+    letter-spacing: -0.02em;
+    transition: color 0.3s ease;
+}
+
+.subtitle {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+/* Error Message */
+.errorMessage {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+    padding: 0.875rem 1rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Form Groups */
+.formGroup {
+    margin-bottom: 1.25rem;
+}
+
+.formGroup.last {
+    margin-bottom: 1.5rem;
+}
+
+.label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    /* Original was mixed, usually secondary or main */
+    margin-bottom: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.inputWrapper {
+    position: relative;
+}
+
+.inputIcon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-muted);
+    transition: color 0.3s ease;
+    pointer-events: none;
+}
+
+.input {
+    width: 100%;
+    padding: 0.875rem 1rem 0.875rem 2.75rem;
+    background-color: var(--color-background);
+    /* Using background-page or similar */
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    font-size: 0.9375rem;
+    color: var(--color-text-main);
+    outline: none;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.inputError {
+    border-color: var(--color-error);
+}
+
+.input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* Password Toggle */
+.passwordToggle {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.passwordToggle:hover {
+    color: var(--color-primary);
+}
+
+.errorText {
+    color: var(--color-error);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+/* Submit Button */
+.submitButton {
+    width: 100%;
+    padding: 0.875rem;
+    background: linear-gradient(135deg, var(--color-primary) 0%, #818cf8 100%);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.submitButton:not(:disabled):hover {
+    transform: translateY(-1px);
+}
+
+.submitButton:not(:disabled):active {
+    transform: translateY(0);
+}
+
+.submitButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* Footer */
+.footer {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    transition: color 0.3s ease;
+}
+
+.contactAdmin {
+    color: var(--color-primary);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

@@ -1,0 +1,32 @@
+@baseUrl = http://localhost:9999/v1
+@login = admin
+@password = 12345678
+
+# @name login
+POST {{baseUrl}}/auth
+Content-Type: application/json
+Accept-Language: en-US
+
+{
+  "login": "{{login}}",
+  "password": "{{password}}"
+}
+
+###
+
+@token = {{login.response.body.accesstoken}}
+
+### Refresh Token
+PUT {{baseUrl}}/auth?expire=false
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Check Auth (Get User Profile)
+GET {{baseUrl}}/auth
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{token}}
+Accept: application/json

@@ -7,21 +7,21 @@ import (
 	"runtime"
 	"syscall"
 
-	_ "github.com/raulaguila/go-api/docs" // Swagger docs
+	"github.com/godeh/sloggergo"
+	"github.com/godeh/sloggergo/formatter"
+	"github.com/godeh/sloggergo/sink"
 
 	"github.com/raulaguila/go-api/config"
+	_ "github.com/raulaguila/go-api/docs" // Swagger docs
 	"github.com/raulaguila/go-api/internal/adapter/driven/persistence/postgres"
 	"github.com/raulaguila/go-api/internal/adapter/driven/storage/minio"
 	"github.com/raulaguila/go-api/internal/adapter/driven/storage/redis"
 	"github.com/raulaguila/go-api/internal/adapter/driver/rest"
 	"github.com/raulaguila/go-api/internal/di"
-	"github.com/raulaguila/go-api/pkg/loggerx"
-	"github.com/raulaguila/go-api/pkg/loggerx/formatter"
-	"github.com/raulaguila/go-api/pkg/loggerx/sink"
 )
 
 // initLogger creates and configures the application logger
-func initLogger(cfg *config.Environment) *loggerx.Logger {
+func initLogger(cfg *config.Environment) *sloggergo.Logger {
 	fmt := func() formatter.Formatter {
 		switch cfg.LogFormat {
 		case "json":
@@ -36,12 +36,12 @@ func initLogger(cfg *config.Environment) *loggerx.Logger {
 	// 	panic(err)
 	// }
 
-	return loggerx.New(
-		loggerx.WithLevel(loggerx.ParseLogLevel(cfg.LogLevel)),
-		loggerx.WithSink(sink.NewStdout(sink.WithFormatter(fmt()))),
-		loggerx.WithFields(map[string]any{"version": cfg.Version}),
-		// loggerx.WithSink(fileSink),
-		// loggerx.WithTimeFormat(time.DateTime),
+	return sloggergo.New(
+		sloggergo.WithLevel(sloggergo.ParseLevel(cfg.LogLevel)),
+		sloggergo.WithSink(sink.NewStdout(sink.WithFormatter(fmt()))),
+		sloggergo.WithFields(map[string]any{"version": cfg.Version}),
+		// sloggergo.WithSink(fileSink),
+		// sloggergo.WithTimeFormat(time.DateTime),
 	)
 }
 
@@ -131,7 +131,7 @@ func main() {
 }
 
 // handleShutdown handles graceful shutdown on SIGINT/SIGTERM
-func handleShutdown(log *loggerx.Logger, server *rest.Server, container *di.Container) {
+func handleShutdown(log *sloggergo.Logger, server *rest.Server, container *di.Container) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-sigChan

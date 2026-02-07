@@ -11,10 +11,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/godeh/dotenvgo"
-
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/raulaguila/go-api/pkg/envx"
+
+	"github.com/godeh/dotenvgo"
 )
 
 //go:embed locales/*
@@ -72,7 +71,7 @@ type Environment struct {
 
 func init() {
 	// Register parser for *rsa.PrivateKey
-	envx.RegisterParser(func(s string) (*rsa.PrivateKey, error) {
+	dotenvgo.RegisterParser(func(s string) (*rsa.PrivateKey, error) {
 		if s == "new" {
 			return rsa.GenerateKey(rand.Reader, 2048)
 		}
@@ -99,9 +98,9 @@ func MustLoad() *Environment {
 
 // Load loads configuration from environment
 func load() (*Environment, error) {
-	if err := dotenvgo.LoadDotEnvOverride(path.Join("config", ".env")); err != nil {
+	if err := dotenvgo.LoadDotEnv(path.Join("config", ".env"), true); err != nil {
 		_, b, _, _ := runtime.Caller(0)
-		if err := dotenvgo.LoadDotEnvOverride(path.Join(path.Dir(b), "..", "config", ".env")); err != nil {
+		if err := dotenvgo.LoadDotEnv(path.Join(path.Dir(b), "..", "config", ".env"), true); err != nil {
 			fmt.Printf("Failed to load environment file: %v\n", err)
 			os.Exit(1)
 		}

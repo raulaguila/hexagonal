@@ -64,10 +64,6 @@ func (u *userUseCase) GetUserByID(ctx context.Context, id string) (*dto.UserOutp
 
 // CreateUser creates a new user
 func (u *userUseCase) CreateUser(ctx context.Context, input *dto.UserInput) (*dto.UserOutput, error) {
-	if err := input.Validate(); err != nil {
-		return nil, err
-	}
-
 	existing, _ := u.repo.FindByEmail(ctx, *input.Email)
 	if existing != nil {
 		return nil, apperror.Conflict("email", "email already exists")
@@ -129,10 +125,6 @@ func (u *userUseCase) UpdateUser(ctx context.Context, id string, input *dto.User
 	uid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, apperror.InvalidInput("id", "invalid uuid format")
-	}
-
-	if err := input.Validate(); err != nil {
-		return nil, err
 	}
 
 	user, err := u.repo.FindByID(ctx, uid)
@@ -224,10 +216,6 @@ func (u *userUseCase) ResetPassword(ctx context.Context, email string) error {
 
 // SetPassword sets a user's password
 func (u *userUseCase) SetPassword(ctx context.Context, email string, input *dto.PasswordInput) error {
-	if err := input.Validate(); err != nil {
-		return err
-	}
-
 	user, err := u.repo.FindByEmail(ctx, email)
 	if err != nil {
 		return apperror.UserNotFound()

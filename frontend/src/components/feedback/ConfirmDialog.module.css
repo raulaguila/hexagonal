@@ -1,0 +1,104 @@
+/* ConfirmDialog.module.css */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.dialog {
+    position: relative;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    width: 100%;
+    max-width: 400px;
+    margin: 1rem;
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    animation: dialogFadeIn 0.2s ease-out;
+}
+
+@keyframes dialogFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.content {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.iconWrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+}
+
+/* Variant colors for icon background */
+.dangerWrapper {
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.warningWrapper {
+    background-color: rgba(245, 158, 11, 0.1);
+}
+
+.primaryWrapper {
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+/* Icon colors */
+.dangerIcon {
+    color: var(--color-error);
+}
+
+.warningIcon {
+    color: var(--color-warning);
+}
+
+.primaryIcon {
+    color: var(--color-primary);
+}
+
+.title {
+    margin: 0 0 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text-main);
+}
+
+.message {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+}
+
+.actions {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--color-border);
+    background-color: var(--color-background);
+}
+
+.button {
+    flex: 1;
+}

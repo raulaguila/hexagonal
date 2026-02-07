@@ -11,19 +11,18 @@ import (
 	"github.com/raulaguila/go-api/internal/core/domain/entity"
 	"github.com/raulaguila/go-api/internal/core/dto"
 	"github.com/raulaguila/go-api/internal/core/port/input"
-	"github.com/raulaguila/go-api/internal/core/service/auditor"
 	"github.com/raulaguila/go-api/pkg/pgerror"
 )
 
 // UserHandler handles user endpoints
 type UserHandler struct {
 	useCase     input.UserUseCase
-	auditor     auditor.Auditor
+	auditor     input.AuditorUseCase
 	handleError func(*fiber.Ctx, error) error
 }
 
 // NewUserHandler creates a new UserHandler and registers routes
-func NewUserHandler(router fiber.Router, useCase input.UserUseCase, aud auditor.Auditor, accessAuth fiber.Handler) {
+func NewUserHandler(router fiber.Router, useCase input.UserUseCase, aud input.AuditorUseCase, accessAuth fiber.Handler) {
 	handler := &UserHandler{
 		useCase: useCase,
 		auditor: aud,
@@ -137,32 +136,35 @@ func (h *UserHandler) createUser(c *fiber.Ctx) error {
 	}
 
 	// Audit log
-	if h.auditor != nil {
-		actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
-		var actorID *uuid.UUID
-		if actor != nil {
-			actorID = &actor.ID
-		}
-		resID := ""
-		if user.ID != nil {
-			resID = *user.ID
-		}
-		// Build metadata with DTO data (mask sensitive fields)
-		metadata := map[string]any{
-			"ip":         c.IP(),
-			"user_agent": c.Get("User-Agent"),
-		}
-		if userDTO != nil {
-			metadata["input"] = map[string]any{
-				"name":     userDTO.Name,
-				"username": userDTO.Username,
-				"email":    userDTO.Email,
-				"status":   userDTO.Status,
-				"role_ids": userDTO.RoleIDs,
+	go func(c *fiber.Ctx, input *dto.UserInput, output *dto.UserOutput) {
+		if h.auditor != nil {
+			actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
+			var actorID *uuid.UUID
+			if actor != nil {
+				actorID = &actor.ID
 			}
+			resID := ""
+			if output.ID != nil {
+				resID = *output.ID
+			}
+			// Build metadata with DTO data (mask sensitive fields)
+			metadata := map[string]any{
+				"ip":         c.IP(),
+				"user_agent": c.Get("User-Agent"),
+			}
+
+			if input != nil {
+				metadata["input"] = map[string]any{
+					"name":     input.Name,
+					"username": input.Username,
+					"email":    input.Email,
+					"status":   input.Status,
+					"role_ids": input.RoleIDs,
+				}
+			}
+			h.auditor.Log(actorID, "create", "user", resID, metadata)
 		}
-		h.auditor.Log(c.Context(), actorID, "create", "user", resID, metadata)
-	}
+	}(c, userDTO, user)
 
 	return presenter.Created(c, fiberi18n.MustLocalize(c, "userCreated"), user)
 }
@@ -193,32 +195,34 @@ func (h *UserHandler) updateUser(c *fiber.Ctx) error {
 	}
 
 	// Audit log
-	if h.auditor != nil {
-		actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
-		var actorID *uuid.UUID
-		if actor != nil {
-			actorID = &actor.ID
-		}
-		resID := ""
-		if user.ID != nil {
-			resID = *user.ID
-		}
-		// Build metadata with DTO data (mask sensitive fields)
-		metadata := map[string]any{
-			"ip":         c.IP(),
-			"user_agent": c.Get("User-Agent"),
-		}
-		if userDTO != nil {
-			metadata["input"] = map[string]any{
-				"name":     userDTO.Name,
-				"username": userDTO.Username,
-				"email":    userDTO.Email,
-				"status":   userDTO.Status,
-				"role_ids": userDTO.RoleIDs,
+	go func(c *fiber.Ctx, input *dto.UserInput, output *dto.UserOutput) {
+		if h.auditor != nil {
+			actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
+			var actorID *uuid.UUID
+			if actor != nil {
+				actorID = &actor.ID
 			}
+			resID := ""
+			if output.ID != nil {
+				resID = *output.ID
+			}
+			// Build metadata with DTO data (mask sensitive fields)
+			metadata := map[string]any{
+				"ip":         c.IP(),
+				"user_agent": c.Get("User-Agent"),
+			}
+			if input != nil {
+				metadata["input"] = map[string]any{
+					"name":     input.Name,
+					"username": input.Username,
+					"email":    input.Email,
+					"status":   input.Status,
+					"role_ids": input.RoleIDs,
+				}
+			}
+			h.auditor.Log(actorID, "update", "user", resID, metadata)
 		}
-		h.auditor.Log(c.Context(), actorID, "update", "user", resID, metadata)
-	}
+	}(c, userDTO, user)
 
 	return presenter.New(c, fiber.StatusOK, fiberi18n.MustLocalize(c, "userUpdated"), user)
 }
@@ -244,19 +248,21 @@ func (h *UserHandler) deleteUser(c *fiber.Ctx) error {
 	}
 
 	// Audit log
-	if h.auditor != nil {
-		actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
-		var actorID *uuid.UUID
-		if actor != nil {
-			actorID = &actor.ID
+	go func(c *fiber.Ctx, input *dto.IDsInput) {
+		if h.auditor != nil {
+			actor, _ := c.Locals(middleware.LocalUser).(*entity.User)
+			var actorID *uuid.UUID
+			if actor != nil {
+				actorID = &actor.ID
+			}
+			for _, deletedID := range input.IDs {
+				h.auditor.Log(actorID, "delete", "user", deletedID, map[string]any{
+					"ip":         c.IP(),
+					"user_agent": c.Get("User-Agent"),
+				})
+			}
 		}
-		for _, deletedID := range toDelete.IDs {
-			h.auditor.Log(c.Context(), actorID, "delete", "user", deletedID, map[string]interface{}{
-				"ip":         c.IP(),
-				"user_agent": c.Get("User-Agent"),
-			})
-		}
-	}
+	}(c, toDelete)
 
 	return presenter.New(c, fiber.StatusOK, fiberi18n.MustLocalize(c, "userDeleted"), nil)
 }
@@ -317,9 +323,6 @@ func (h *UserHandler) setUserPassword(c *fiber.Ctx) error {
 	}
 
 	pass := GetLocal[dto.PasswordInput](c, middleware.CtxKeyDTO)
-	if err := pass.Validate(); err != nil {
-		return h.handleError(c, err)
-	}
 
 	if err := h.useCase.SetPassword(c.Context(), email, pass); err != nil {
 		return h.handleError(c, err)
@@ -327,7 +330,3 @@ func (h *UserHandler) setUserPassword(c *fiber.Ctx) error {
 
 	return presenter.New(c, fiber.StatusOK, fiberi18n.MustLocalize(c, "passSet"), nil)
 }
-
-// Helpers usually in base.go: GetLocal, GetQuery.
-// I should rely on them being there.
-// If I need to import them, I can't. They must be in same package.

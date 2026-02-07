@@ -1407,6 +1407,9 @@ const docTemplate = `{
         "github_com_raulaguila_go-api_internal_core_dto.RoleInput": {
             "type": "object",
             "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string",
                     "maxLength": 100,
@@ -1423,6 +1426,9 @@ const docTemplate = `{
         "github_com_raulaguila_go-api_internal_core_dto.RoleOutput": {
             "type": "object",
             "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -1467,9 +1473,6 @@ const docTemplate = `{
         "github_com_raulaguila_go-api_internal_core_dto.UserOutput": {
             "type": "object",
             "properties": {
-                "corp_id": {
-                    "type": "string"
-                },
                 "email": {
                     "type": "string"
                 },
@@ -1482,6 +1485,12 @@ const docTemplate = `{
                 "new": {
                     "type": "boolean"
                 },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "roles": {
                     "type": "array",
                     "items": {
@@ -1490,6 +1499,9 @@ const docTemplate = `{
                 },
                 "status": {
                     "type": "boolean"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },

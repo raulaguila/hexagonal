@@ -3,6 +3,7 @@ package di
 import (
 	"log/slog"
 
+	"github.com/godeh/sloggergo"
 	"gorm.io/gorm"
 
 	"github.com/raulaguila/go-api/config"
@@ -10,11 +11,10 @@ import (
 	"github.com/raulaguila/go-api/internal/adapter/driven/storage/redis"
 	"github.com/raulaguila/go-api/internal/app"
 	"github.com/raulaguila/go-api/internal/core/port/output"
-	"github.com/raulaguila/go-api/internal/core/service/auditor"
+	"github.com/raulaguila/go-api/internal/core/usecase/auditor"
 	"github.com/raulaguila/go-api/internal/core/usecase/auth"
 	"github.com/raulaguila/go-api/internal/core/usecase/role"
 	"github.com/raulaguila/go-api/internal/core/usecase/user"
-	"github.com/raulaguila/go-api/pkg/loggerx"
 )
 
 // Container holds all application dependencies.
@@ -22,7 +22,7 @@ import (
 type Container struct {
 	// Infrastructure
 	Config *config.Environment
-	Log    *loggerx.Logger
+	Log    *sloggergo.Logger
 	DB     *gorm.DB
 	Redis  *redis.Service
 
@@ -31,7 +31,7 @@ type Container struct {
 }
 
 // NewContainer creates and initializes a new dependency container
-func NewContainer(cfg *config.Environment, log *loggerx.Logger, db *gorm.DB, redis *redis.Service) *Container {
+func NewContainer(cfg *config.Environment, log *sloggergo.Logger, db *gorm.DB, redis *redis.Service) *Container {
 	c := &Container{
 		Config: cfg,
 		Log:    log,
@@ -71,7 +71,7 @@ func (c *Container) initRepositories() {
 // Application returns a fully configured Application instance
 func (c *Container) Application() *app.Application {
 	// Create auditor service
-	aud := auditor.NewAuditor(c.repositories.Audit, c.Log)
+	aud := auditor.NewAuditorUseCase(c.repositories.Audit, c.Log)
 
 	return app.New(
 		c.Config,

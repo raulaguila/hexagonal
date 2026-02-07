@@ -4,6 +4,7 @@ import { StatCard } from '../components/common/Card';
 import { SkeletonCard } from '../components/feedback/Skeleton';
 import { usePreferences } from '../context/PreferencesContext';
 import api from '../services/api';
+import styles from './DashboardPage.module.css';
 
 const DashboardPage = () => {
     const { t } = usePreferences();
@@ -85,46 +86,19 @@ const DashboardPage = () => {
     return (
         <div>
             {/* Header */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                marginBottom: '2rem'
-            }}>
-                <div>
-                    <h1 style={{
-                        fontSize: '1.75rem',
-                        fontWeight: 700,
-                        margin: 0,
-                        color: 'var(--color-text-main)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem'
-                    }}>
-                        <Zap size={28} style={{ color: 'var(--color-primary)' }} />
+            <div className={styles.header}>
+                <div className={styles.titleWrapper}>
+                    <h1 className={styles.title}>
+                        <Zap size={28} className={styles.titleIcon} />
                         {t('dashboard.title') || 'Dashboard'}
                     </h1>
-                    <p style={{
-                        color: 'var(--color-text-secondary)',
-                        marginTop: '0.5rem',
-                        fontSize: '0.9375rem'
-                    }}>
+                    <p className={styles.subtitle}>
                         {t('dashboard.subtitle') || 'System overview and real-time metrics'}
                     </p>
                 </div>
 
                 {lastUpdated && (
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        fontSize: '0.8125rem',
-                        color: 'var(--color-text-muted)',
-                        backgroundColor: 'var(--color-surface)',
-                        padding: '0.5rem 1rem',
-                        borderRadius: 'var(--radius-md)',
-                        border: '1px solid var(--color-border)'
-                    }}>
+                    <div className={styles.updatedBadge}>
                         <Clock size={14} />
                         {t('dashboard.updated') || 'Updated'} {lastUpdated.toLocaleTimeString()}
                     </div>
@@ -132,12 +106,7 @@ const DashboardPage = () => {
             </div>
 
             {/* Primary Stats */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                gap: '1rem',
-                marginBottom: '1.5rem'
-            }}>
+            <div className={styles.statsGrid}>
                 {loading ? (
                     <>
                         <SkeletonCard />
@@ -176,101 +145,40 @@ const DashboardPage = () => {
             </div>
 
             {/* Secondary Info Cards */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                gap: '1rem'
-            }}>
+            <div className={styles.infoGrid}>
                 {/* Quick Stats Card */}
-                <div style={{
-                    backgroundColor: 'var(--color-surface)',
-                    borderRadius: 'var(--radius-lg)',
-                    border: '1px solid var(--color-border)',
-                    padding: '1.5rem',
-                    boxShadow: 'var(--shadow-sm)'
-                }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        marginBottom: '1.25rem'
-                    }}>
-                        <div style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: 'var(--radius-md)',
-                            backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <TrendingUp size={18} style={{ color: 'var(--color-primary)' }} />
+                <div className={styles.infoCard}>
+                    <div className={styles.infoCardHeader}>
+                        <div className={`${styles.infoIconWrapper} ${styles.quickStatsIcon}`}>
+                            <TrendingUp size={18} />
                         </div>
-                        <h3 style={{
-                            margin: 0,
-                            fontSize: '1rem',
-                            fontWeight: 600,
-                            color: 'var(--color-text-main)'
-                        }}>
+                        <h3 className={styles.infoCardTitle}>
                             {t('dashboard.quick_stats') || 'Quick Stats'}
                         </h3>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: '0.75rem',
-                            backgroundColor: 'var(--color-background)',
-                            borderRadius: 'var(--radius-md)'
-                        }}>
-                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                    <div className={styles.infoList}>
+                        <div className={styles.listItem}>
+                            <span className={styles.label}>
                                 {t('dashboard.registered_users') || 'Registered Users'}
                             </span>
-                            <span style={{
-                                fontSize: '1.25rem',
-                                fontWeight: 700,
-                                color: 'var(--color-text-main)'
-                            }}>
+                            <span className={styles.value}>
                                 {loading ? '...' : stats.users}
                             </span>
                         </div>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: '0.75rem',
-                            backgroundColor: 'var(--color-background)',
-                            borderRadius: 'var(--radius-md)'
-                        }}>
-                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                        <div className={styles.listItem}>
+                            <span className={styles.label}>
                                 {t('dashboard.defined_roles') || 'Defined Roles'}
                             </span>
-                            <span style={{
-                                fontSize: '1.25rem',
-                                fontWeight: 700,
-                                color: 'var(--color-text-main)'
-                            }}>
+                            <span className={styles.value}>
                                 {loading ? '...' : stats.roles}
                             </span>
                         </div>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            padding: '0.75rem',
-                            backgroundColor: 'var(--color-background)',
-                            borderRadius: 'var(--radius-md)'
-                        }}>
-                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                        <div className={styles.listItem}>
+                            <span className={styles.label}>
                                 {t('dashboard.uptime') || 'Uptime'}
                             </span>
-                            <span style={{
-                                fontSize: '1.25rem',
-                                fontWeight: 700,
-                                color: '#10b981'
-                            }}>
+                            <span className={styles.valueSuccess}>
                                 {loading ? '...' : stats.uptime}
                             </span>
                         </div>
@@ -278,96 +186,46 @@ const DashboardPage = () => {
                 </div>
 
                 {/* System Info Card */}
-                <div style={{
-                    backgroundColor: 'var(--color-surface)',
-                    borderRadius: 'var(--radius-lg)',
-                    border: '1px solid var(--color-border)',
-                    padding: '1.5rem',
-                    boxShadow: 'var(--shadow-sm)'
-                }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        marginBottom: '1.25rem'
-                    }}>
-                        <div style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: 'var(--radius-md)',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <Database size={18} style={{ color: '#10b981' }} />
+                <div className={styles.infoCard}>
+                    <div className={styles.infoCardHeader}>
+                        <div className={`${styles.infoIconWrapper} ${styles.systemIcon}`}>
+                            <Database size={18} />
                         </div>
-                        <h3 style={{
-                            margin: 0,
-                            fontSize: '1rem',
-                            fontWeight: 600,
-                            color: 'var(--color-text-main)'
-                        }}>
+                        <h3 className={styles.infoCardTitle}>
                             {t('dashboard.system_info') || 'System Information'}
                         </h3>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            padding: '0.5rem 0',
-                            borderBottom: '1px solid var(--color-border)'
-                        }}>
-                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                    <div className={styles.systemList}>
+                        <div className={styles.listItemBordered}>
+                            <span className={styles.label}>
                                 {t('dashboard.application') || 'Application'}
                             </span>
-                            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-main)' }}>
+                            <span className={styles.valueSmall}>
                                 HexAdmin {stats.version || 'v1.0.0'}
                             </span>
                         </div>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            padding: '0.5rem 0',
-                            borderBottom: '1px solid var(--color-border)'
-                        }}>
-                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                        <div className={styles.listItemBordered}>
+                            <span className={styles.label}>
                                 {t('dashboard.environment') || 'Environment'}
                             </span>
-                            <span style={{
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                color: '#10b981',
-                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                                padding: '0.25rem 0.5rem',
-                                borderRadius: 'var(--radius-sm)'
-                            }}>
+                            <span className={styles.tag}>
                                 Production
                             </span>
                         </div>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            padding: '0.5rem 0',
-                            borderBottom: '1px solid var(--color-border)'
-                        }}>
-                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                        <div className={styles.listItemBordered}>
+                            <span className={styles.label}>
                                 {t('dashboard.api_endpoint') || 'API Endpoint'}
                             </span>
-                            <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-main)' }}>
+                            <span className={styles.valueStatus}>
                                 {stats.serverStatus === 'Online' ? `✓ ${t('dashboard.connected') || 'Connected'}` : `✗ ${t('dashboard.disconnected') || 'Disconnected'}`}
                             </span>
                         </div>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            padding: '0.5rem 0'
-                        }}>
-                            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                        <div className={styles.listItemBordered}>
+                            <span className={styles.label}>
                                 {t('dashboard.last_update') || 'Last Update'}
                             </span>
-                            <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-main)' }}>
+                            <span className={styles.valueStatus}>
                                 {lastUpdated ? lastUpdated.toLocaleDateString() : 'N/A'}
                             </span>
                         </div>

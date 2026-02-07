@@ -29,7 +29,7 @@ ACCESS_TOKEN='${access_token}'                  # Token to encode access token -
 RFRESH_TOKEN='${refresh_token}'                 # Token to encode refresh token - PRIVATE TOKEN
 
 POSTGRES_HOST='postgres'                        # Postgres Container HOST
-POSTGRES_PORT='5432'                            # Postgres Container PORT
+POSTGRES_PORT='5435'                            # Postgres Container PORT
 POSTGRES_USER='root'                            # Postgres USER
 POSTGRES_PASS='root'                            # Postgres PASS
 POSTGRES_BASE='api'                             # Postgres BASE

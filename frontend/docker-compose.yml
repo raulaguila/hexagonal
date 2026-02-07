@@ -1,0 +1,20 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    image: hexagonal-frontend
+    container_name: hexagonal-frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - hexagonal-network
+
+networks:
+  hexagonal-network:
+    driver: bridge

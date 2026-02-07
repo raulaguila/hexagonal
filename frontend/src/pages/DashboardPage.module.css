@@ -1,0 +1,177 @@
+/* DashboardPage.module.css */
+
+/* Layout & Grid */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+.titleWrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--color-text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.titleIcon {
+    color: var(--color-primary);
+}
+
+.subtitle {
+    color: var(--color-text-secondary);
+    margin-top: 0.5rem;
+    font-size: 0.9375rem;
+}
+
+.updatedBadge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+    background-color: var(--color-surface);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+}
+
+/* Grids */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.infoGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+}
+
+/* Info Cards (Quick Stats / System Info) */
+.infoCard {
+    background-color: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.infoCardHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.infoIconWrapper {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quickStatsIcon {
+    background-color: rgba(99, 102, 241, 0.1);
+    /* Primary-light opacity */
+    color: var(--color-primary);
+}
+
+.systemIcon {
+    background-color: rgba(16, 185, 129, 0.1);
+    /* Success opacity */
+    color: #10b981;
+}
+
+.infoCardTitle {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-main);
+}
+
+/* List Items */
+.infoList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.systemList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.listItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background-color: var(--color-background);
+    border-radius: var(--radius-md);
+}
+
+.listItemBordered {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.listItemBordered:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+/* Typography Helpers */
+.label {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+}
+
+.value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text-main);
+}
+
+.valueSmall {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-main);
+}
+
+.valueStatus {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-main);
+}
+
+.valueSuccess {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #10b981;
+}
+
+.tag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #10b981;
+    background-color: rgba(16, 185, 129, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+}

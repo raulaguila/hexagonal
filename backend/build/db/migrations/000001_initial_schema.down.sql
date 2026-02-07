@@ -17,6 +17,11 @@ DROP TABLE IF EXISTS sys_audit_logs;
 DROP VIEW IF EXISTS vw_audit_logs_detailed;
 DROP VIEW IF EXISTS vw_audit_logs;
 
+-- Drop pg_cron extension
+SELECT cron.unschedule('delete_old_audits_logs');
+DROP EXTENSION IF EXISTS "pg_cron";
+
+-- Drop other extensions
 DROP EXTENSION IF EXISTS "unaccent";
 DROP EXTENSION IF EXISTS "citext";
 DROP EXTENSION IF EXISTS "pgcrypto";

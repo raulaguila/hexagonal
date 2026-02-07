@@ -1,0 +1,84 @@
+@baseUrl = http://localhost:9999/v1
+@password = 123456
+
+# @name login
+POST {{baseUrl}}/auth
+Content-Type: application/json
+
+{
+  "login": "admin",
+  "password": "12345678"
+}
+
+###
+
+@token = {{login.response.body.accesstoken}}
+# Retrieve a role ID to assign to the user (Optional: assumes one exists or fetches lists)
+# For simplicity, we might skip role assignment or fetch roles first.
+
+# @name listRoles
+GET {{baseUrl}}/role?limit=1
+Authorization: Bearer {{token}}
+
+###
+
+@roleId = {{listRoles.response.body.items[0].id}}
+
+### Create User
+# @name createUser
+POST {{baseUrl}}/user
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "username": "johndoe",
+  "email": "john@example.com",
+  "status": true,
+  "role_ids": ["{{roleId}}"]
+}
+
+###
+
+@userId = {{createUser.response.body.object.id}}
+@userEmail = {{createUser.response.body.object.email}}
+
+### Get User By ID
+GET {{baseUrl}}/user/{{userId}}
+Authorization: Bearer {{token}}
+
+### List Users
+GET {{baseUrl}}/user?page=1&limit=10
+Authorization: Bearer {{token}}
+
+### Update User
+PUT {{baseUrl}}/user/{{userId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Johnathan Doe"
+}
+
+### Set User Password
+PUT {{baseUrl}}/user/pass?email={{userEmail}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "password": "{{password}}",
+  "password_confirm": "{{password}}"
+}
+
+### Reset User Password
+DELETE {{baseUrl}}/user/pass?email={{userEmail}}
+Authorization: Bearer {{token}}
+
+### Delete User
+DELETE {{baseUrl}}/user
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "ids": ["{{userId}}"]
+}
